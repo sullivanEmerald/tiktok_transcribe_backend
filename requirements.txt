@@ -1,0 +1,1 @@
+# For yt-dlp-exec and ffmpeg-static, we use npm packages, not Python
