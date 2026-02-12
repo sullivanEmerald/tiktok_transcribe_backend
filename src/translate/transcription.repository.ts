@@ -14,7 +14,7 @@ export class TranscriptionRepository {
     }
 
     async findByJobId(jobId: string) {
-        return this.transcriptionModel.findOne({ jobId });
+        return this.transcriptionModel.findById(jobId);
     }
 
     async findByIp(ip: string) {

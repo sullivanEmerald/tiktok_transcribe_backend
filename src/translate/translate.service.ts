@@ -108,4 +108,8 @@ export class TranscriptionService {
         if (Array.isArray(ip)) ip = ip[0];
         return this.transcriptionRepository.findByIp(ip);
     }
+
+    async getTranscription(id: string) {
+        return this.transcriptionRepository.findByJobId(id);
+    }
 }

@@ -57,4 +57,11 @@ export class TranscriptionController {
         console.log('Fetching recent transcriptions for IP');
         return this.transcriptionService.getRecentTranscribesForIp();
     }
+
+    @Get(':id')
+    async getTranscription(@Param('id') id: string) {
+        const result = await this.transcriptionService.getTranscription(id);
+        console.log('Fetched transcription for job ID:', id, 'Result:', result);
+        return result;
+    }
 }
