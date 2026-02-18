@@ -11,7 +11,7 @@ WORKDIR /app
 
 # Copy package files and install dependencies
 COPY package*.json ./
-RUN npm install --production
+RUN npm install
 
 # Install NestJS CLI globally for build
 RUN npm install -g @nestjs/cli
