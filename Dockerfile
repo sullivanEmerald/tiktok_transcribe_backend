@@ -1,9 +1,10 @@
 # Use official Node.js LTS image
 FROM node:18-slim
 
-# Install ffmpeg, ffprobe, ffplay, and Python3/pip for yt-dlp
+# Install ffmpeg, python3, python3-distutils, curl, then pip and yt-dlp
 RUN apt-get update && \
-    apt-get install -y ffmpeg python3 python3-pip && \
+    apt-get install -y ffmpeg python3 python3-distutils curl && \
+    curl -sS https://bootstrap.pypa.io/get-pip.py | python3 && \
     pip3 install yt-dlp && \
     rm -rf /var/lib/apt/lists/*
 
