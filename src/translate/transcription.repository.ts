@@ -18,6 +18,6 @@ export class TranscriptionRepository {
     }
 
     async findByIp(ip: string) {
-        return this.transcriptionModel.find({ ip });
+        return this.transcriptionModel.find({ ip }).sort({ createdAt: -1 }).limit(10);
     }
 }
