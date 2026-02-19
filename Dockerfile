@@ -19,6 +19,9 @@ RUN npm install -g @nestjs/cli
 # Copy the rest of your app
 COPY . .
 
+# Copy cookies.txt into the image (for yt-dlp authentication)
+COPY cookies.txt /app/cookies.txt
+
 # Build the app (if using TypeScript)
 RUN npm run build
 

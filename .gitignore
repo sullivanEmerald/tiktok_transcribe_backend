@@ -60,3 +60,5 @@ report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 bin/ffmpeg.exe
 bin/ffplay.exe
 bin/ffprobe.exe
+
+# Misc
