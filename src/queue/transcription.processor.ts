@@ -19,13 +19,16 @@ export class TranscriptionProcessor {
 
         // 1. Download audio using yt-dlp and ffmpeg (Linux-compatible)
         const audioPath = path.join(tempDir, `${job.id}.mp3`);
-        const ytDlpCmd = `yt-dlp -x --audio-format mp3 -o "${audioPath}" "${videoUrl}"`;
+        const ytDlpPath = '/usr/bin/yt-dlp'; // default install path for apt
+        const ytDlpCmd = `${ytDlpPath} -x --audio-format mp3 -o "${audioPath}" "${videoUrl}"`;
+        this.logger.log(`yt-dlp command: ${ytDlpCmd}`);
         try {
             await new Promise((resolve, reject) => {
                 exec(ytDlpCmd, (error, stdout, stderr) => {
+                    this.logger.log('yt-dlp stdout:', stdout);
+                    this.logger.log('yt-dlp stderr:', stderr);
                     if (error) {
                         this.logger.error(`yt-dlp error: ${error.message}`);
-                        this.logger.error(stderr);
                         reject(error);
                     } else {
                         this.logger.log('yt-dlp audio download complete');
