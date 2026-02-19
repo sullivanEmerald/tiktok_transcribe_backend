@@ -15,11 +15,10 @@ import { MongooseModule } from '@nestjs/mongoose';
       limit: 10, // 10 requests per minute per IP
     } as any), // cast to any to bypass type error for now
     BullModule.forRoot({
-      // Redis config (default localhost:6379)
-      redis: {
-        host: 'localhost',
-        port: 6379,
-      },
+      // Redis config: use REDIS_URL if available, else fallback to localhost
+      redis: process.env.REDIS_URL
+        ? process.env.REDIS_URL
+        : { host: 'localhost', port: 6379 },
     }),
     MongooseModule.forRoot(process.env.MONGODB_URI || ''),
     TranslateModule,
