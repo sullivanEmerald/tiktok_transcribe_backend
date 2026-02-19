@@ -1,6 +1,3 @@
-# Export cookies from your browser and place them here.
-# NEVER commit real cookies to a public repo!
-
 # Netscape HTTP Cookie File
 # https://curl.haxx.se/rfc/cookie_spec.html
 # This is a generated file! Do not edit.
@@ -18,10 +15,6 @@
 .instagram.com	TRUE	/	TRUE	0	rur	"RVA\0541985537168\0541803020339:01fee597845e2f3341f2a424bebb1bb73c7031d6aa24e598b9e879679b8b2f70981ac87c"
 
 
-
-# Netscape HTTP Cookie File
-# https://curl.haxx.se/rfc/cookie_spec.html
-# This is a generated file! Do not edit.
 
 .tiktok.com	TRUE	/	TRUE	1804637128	_ttp	2zHbwhShBqTrGQ93MzzPsea16hj
 .tiktok.com	TRUE	/	TRUE	1787019873	tt_chain_token	Zm7Eh+mxWv7E9VHVXFDXHA==

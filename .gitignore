@@ -57,8 +57,10 @@ pids
 report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 
 # Binaries
+bin/
 bin/ffmpeg.exe
 bin/ffplay.exe
 bin/ffprobe.exe
+
 
 # Misc
