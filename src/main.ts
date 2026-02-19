@@ -9,7 +9,7 @@ async function bootstrap() {
     origin: frontendUrl || '*',
     credentials: true,
   });
-  const port = process.env.PORT ?? 4000;
+  const port = process.env.PORT ?? 3000;
   await app.listen(port);
   console.log(`Server is running on port ${port}`);
 }
