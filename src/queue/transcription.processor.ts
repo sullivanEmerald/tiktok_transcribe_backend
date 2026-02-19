@@ -17,11 +17,9 @@ export class TranscriptionProcessor {
         const tempDir = './tmp';
         if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir);
 
-        // 1. Download audio using yt-dlp.exe and ffmpeg.exe
+        // 1. Download audio using yt-dlp and ffmpeg (Linux-compatible)
         const audioPath = path.join(tempDir, `${job.id}.mp3`);
-        const ytdlpPath = path.resolve(__dirname, '../../bin/yt-dlp.exe'); // adjust if needed
-        const ffmpegDir = path.resolve(__dirname, '../../bin'); // directory containing ffmpeg.exe
-        const ytDlpCmd = `"${ytdlpPath}" -x --audio-format mp3 --ffmpeg-location "${ffmpegDir}" -o "${audioPath}" "${videoUrl}"`;
+        const ytDlpCmd = `yt-dlp -x --audio-format mp3 -o "${audioPath}" "${videoUrl}"`;
         try {
             await new Promise((resolve, reject) => {
                 exec(ytDlpCmd, (error, stdout, stderr) => {
