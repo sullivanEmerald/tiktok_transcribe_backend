@@ -60,6 +60,7 @@ export class TranscriptionController {
 
     @Get(':id')
     async getTranscription(@Param('id') id: string) {
+        console.log('Fetching transcription for job ID:', id);
         const result = await this.transcriptionService.getTranscription(id);
         console.log('Fetched transcription for job ID:', id, 'Result:', result);
         return result;
