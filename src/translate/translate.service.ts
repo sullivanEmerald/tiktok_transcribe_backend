@@ -110,6 +110,11 @@ export class TranscriptionService {
     }
 
     async getTranscription(id: string) {
+        return this.transcriptionRepository.fetchByJobId(id);
+    }
+
+    async getTranscriptionByJobId(id: string) {
         return this.transcriptionRepository.findByJobId(id);
     }
+
 }

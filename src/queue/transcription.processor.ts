@@ -14,13 +14,58 @@ export class TranscriptionProcessor {
     @Process('process-video')
     async handleTranscription(job: Job) {
         const { videoUrl } = job.data;
-        const tempDir = './tmp';
-        if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir);
+        // Use absolute path for tmp directory
+        const tempDir = path.resolve(__dirname, '../../tmp');
+        if (!fs.existsSync(tempDir)) {
+            fs.mkdirSync(tempDir, { recursive: true });
+            this.logger.log(`Created tmp directory at: ${tempDir}`);
+        } else {
+            this.logger.log(`Using tmp directory at: ${tempDir}`);
+        }
 
-        // 1. Download audio using yt-dlp and ffmpeg (Linux-compatible)
+        // Set cookies path based on OS
+        const cookiesPath = process.platform === 'win32'
+            ? path.join(__dirname, '../../cookies.txt')
+            : '/app/cookies.txt';
+
+        // 1. Download original video using yt-dlp (best quality)
+        const videoPath = path.join(tempDir, `${job.id}.mp4`);
+        this.logger.log(`Video will be saved to: ${videoPath}`);
+        const ytDlpPath = process.platform === 'win32'
+            ? path.join(__dirname, '../../bin/yt-dlp.exe')
+            : '/usr/bin/yt-dlp';
+        const ytDlpVideoCmd = `${ytDlpPath} --cookies "${cookiesPath}" -f best -o "${videoPath}" "${videoUrl}"`;
+        this.logger.log(`yt-dlp video command: ${ytDlpVideoCmd}`);
+        try {
+            await new Promise((resolve, reject) => {
+                exec(ytDlpVideoCmd, (error, stdout, stderr) => {
+                    this.logger.log('yt-dlp video stdout:', stdout);
+                    this.logger.log('yt-dlp video stderr:', stderr);
+                    if (error) {
+                        this.logger.error(`yt-dlp video error: ${error.message}`);
+                        reject(error);
+                    } else {
+                        this.logger.log('yt-dlp video download complete');
+                        resolve(true);
+                    }
+                });
+            });
+            // Check if video file exists after yt-dlp completes
+            if (fs.existsSync(videoPath)) {
+                this.logger.log(`Video file exists after yt-dlp: ${videoPath}`);
+            } else {
+                this.logger.warn(`Video file does NOT exist after yt-dlp: ${videoPath}`);
+            }
+        } catch (err) {
+            this.logger.error('Failed to download video with yt-dlp', err);
+            this.logger.warn(`Video download failed for jobId ${job.id}. Video will not be available for download.`);
+            // Continue processing so transcription can still work
+        }
+
+        // 2. Download audio using yt-dlp and ffmpeg (Linux-compatible)
         const audioPath = path.join(tempDir, `${job.id}.mp3`);
-        const ytDlpPath = '/usr/bin/yt-dlp'; // default install path for apt
-        const ytDlpCmd = `${ytDlpPath} --cookies /app/cookies.txt -x --audio-format mp3 -o "${audioPath}" "${videoUrl}"`;
+        this.logger.log(`Audio will be saved to: ${audioPath}`);
+        const ytDlpCmd = `${ytDlpPath} --cookies "${cookiesPath}" -x --audio-format mp3 --keep-video -o "${audioPath}" "${videoUrl}"`;
         this.logger.log(`yt-dlp command: ${ytDlpCmd}`);
         try {
             await new Promise((resolve, reject) => {
@@ -41,7 +86,7 @@ export class TranscriptionProcessor {
             throw new Error('Audio download failed');
         }
 
-        // 2. Send audio to AssemblyAI (or other provider)
+        // 3. Send audio to AssemblyAI (or other provider)
         const apiKey = process.env.ASSEMBLYAI_API_KEY;
         if (!apiKey) {
             this.logger.error('Missing AssemblyAI API key');
@@ -78,7 +123,7 @@ export class TranscriptionProcessor {
             throw new Error('Transcript job submission failed');
         }
 
-        // 3. Poll for transcript completion
+        // 4. Poll for transcript completion
         let transcriptText = '';
         try {
             while (true) {
@@ -102,14 +147,19 @@ export class TranscriptionProcessor {
             throw new Error('Transcript polling failed');
         }
 
-        // 4. Clean up temp files
+        // 5. Clean up temp files
         try {
             fs.unlinkSync(audioPath);
+            this.logger.log(`Audio file deleted: ${audioPath}`);
+            // Do NOT delete video file after processing, so downloads work on both development and production
+            // If you want to clean up old videos, implement a scheduled cleanup or manual deletion
         } catch (err) {
-            this.logger.warn('Failed to clean up temp audio file', err);
+            this.logger.warn('Failed to clean up temp files', err);
         }
+        // Log existence of both files after cleanup
+        this.logger.log(`After cleanup: video exists? ${fs.existsSync(videoPath)}, audio exists? ${fs.existsSync(audioPath)}`);
 
-        // 5. Return transcript
+        // 6. Return transcript
         this.logger.log('Transcribed text:', transcriptText);
         return transcriptText;
     }
