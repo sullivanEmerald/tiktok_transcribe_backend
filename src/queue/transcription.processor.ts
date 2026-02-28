@@ -110,12 +110,13 @@ export class TranscriptionProcessor {
 
         let transcriptId: string;
         try {
-            this.logger.log('Submitting transcript job with:', { audio_url: audioUrl });
+            this.logger.log('Submitting transcript job with:', { audio_url: audioUrl, utterances: true });
             const transcriptRes = await axios.post(
                 'https://api.assemblyai.com/v2/transcript',
-                { audio_url: audioUrl, speech_models: ["universal-3-pro"] },
+                { audio_url: audioUrl, speech_models: ["universal-3-pro"], language_detection: true, },
                 { headers: { authorization: apiKey } }
             );
+            this.logger.log('AssemblyAI transcript response:', transcriptRes.data);
             transcriptId = transcriptRes.data.id;
             this.logger.log(`Transcript job submitted: ${transcriptId}`);
         } catch (err) {
@@ -125,6 +126,9 @@ export class TranscriptionProcessor {
 
         // 4. Poll for transcript completion
         let transcriptText = '';
+        let transcriptUtterances = [];
+        let transcriptSentences = [];
+
         try {
             while (true) {
                 const statusRes = await axios.get(
@@ -133,8 +137,19 @@ export class TranscriptionProcessor {
                 );
                 if (statusRes.data.status === 'completed') {
                     transcriptText = statusRes.data.text;
-                    this.logger.log('Transcription completed');
-                    break;
+                    // Fetch sentences from AssemblyAI
+                    try {
+                        const sentencesRes = await axios.get(
+                            `https://api.assemblyai.com/v2/transcript/${transcriptId}/sentences`,
+                            { headers: { authorization: apiKey } }
+                        );
+                        transcriptSentences = sentencesRes.data.sentences || [];
+                        break; // Exit loop after fetching sentences
+                    } catch (sentenceErr) {
+                        this.logger.error('Failed to fetch transcript sentences', sentenceErr.response?.data || sentenceErr);
+                    }
+                    // this.logger.log('Transcription completed');
+                    // return { text: transcriptText, utterances: transcriptUtterances, sentences: transcriptSentences };
                 }
                 if (statusRes.data.status === 'failed') {
                     this.logger.error('Transcription failed', statusRes.data);
@@ -156,11 +171,13 @@ export class TranscriptionProcessor {
         } catch (err) {
             this.logger.warn('Failed to clean up temp files', err);
         }
+
         // Log existence of both files after cleanup
         this.logger.log(`After cleanup: video exists? ${fs.existsSync(videoPath)}, audio exists? ${fs.existsSync(audioPath)}`);
 
         // 6. Return transcript
-        this.logger.log('Transcribed text:', transcriptText);
-        return transcriptText;
+        // this.logger.log('Transcribed text:', transcriptText);
+        // this.logger.log('Transcribed utterances:', transcriptUtterances);
+        return { returnvalue: transcriptText, utterances: transcriptSentences };
     }
 }

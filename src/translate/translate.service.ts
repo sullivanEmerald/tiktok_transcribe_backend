@@ -37,10 +37,6 @@ export class TranscriptionService {
             removeOnFail: false,
         });
 
-
-
-        console.log(`Job ${job.id} added to queue for URL: ${dto.videoUrl}`);
-
         return {
             jobId: job.id,
             status: 'processing',
@@ -62,8 +58,6 @@ export class TranscriptionService {
             throw new NotFoundException('Job not found');
         }
 
-        console.log(`Checking status for job ${job.id}`, job);
-
         const state = await job.getState();
         const progress = job.progress();
 
@@ -76,11 +70,15 @@ export class TranscriptionService {
 
     async getJobResult(jobId: string) {
         const job = await this.transcriptionQueue.getJob(jobId);
+        console.log('Fetched job:', job);
+        if (job) {
+            console.log('Job return value:', job.returnvalue);
+            console.log('Job data for sullivan record:', job.data);
+        }
 
         if (!job) {
             throw new NotFoundException('Job not found');
         }
-
         const state = await job.getState();
 
         if (state !== 'completed') {
@@ -92,13 +90,33 @@ export class TranscriptionService {
         if (!transcriptDoc) {
             let ip = this.request.ip || this.request.headers['x-forwarded-for'] || 'unknown';
             if (Array.isArray(ip)) ip = ip[0];
-            transcriptDoc = await this.transcriptionRepository.create(job.returnvalue, ip, String(job.id));
-        }
 
-        console.log(`Job ${job.id} completed. Returning transcript.`);
+            const platform = job.data?.platform
+            const videoUrl = job.data?.videoUrl
+            // Extract utterances from job.returnvalue
+            let utterances: any[] = [];
+            if (job.returnvalue && job.returnvalue.utterances && Array.isArray(job.returnvalue.utterances)) {
+                utterances = job.returnvalue.utterances.map(u => ({
+                    text: u.text,
+                    start: u.start,
+                    end: u.end,
+                }));
+            }
+            transcriptDoc = await this.transcriptionRepository.create({
+                transcript: job.returnvalue?.returnvalue || job.returnvalue?.transcript || '',
+                ip,
+                jobId: String(job.id),
+                platform,
+                videoUrl,
+                utterances,
+            });
+        }
         return {
             jobId: job.id,
-            transcript: job.returnvalue,
+            transcript: job.returnvalue.returnvalue,
+            platform: job.data?.platform,
+            videoUrl: job.data?.videoUrl,
+            utterances: job.returnvalue.utterances,
             status: 'completed',
         };
     }
