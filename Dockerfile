@@ -1,11 +1,16 @@
 # Use official Node.js LTS image
 FROM node:18-slim
 
-# Install ffmpeg and yt-dlp (latest)
+# Install ffmpeg (and wget if needed for other purposes)
 RUN apt-get update && \
-    apt-get install -y ffmpeg wget && \
-    wget https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -O /usr/bin/yt-dlp && \
-    chmod +x /usr/bin/yt-dlp && \
+    apt-get install -y ffmpeg && \
+    rm -rf /var/lib/apt/lists/*
+
+# Install Python3 and pip for yt-dlp TikTok dependencies
+RUN apt-get update && \
+    apt-get install -y python3 python3-pip && \
+    pip3 install --upgrade pip && \
+    pip3 install 'yt-dlp[tiktok]' && \
     rm -rf /var/lib/apt/lists/*
 
 # Set working directory

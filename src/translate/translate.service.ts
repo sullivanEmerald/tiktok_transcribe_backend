@@ -71,10 +71,6 @@ export class TranscriptionService {
     async getJobResult(jobId: string) {
         const job = await this.transcriptionQueue.getJob(jobId);
         console.log('Fetched job:', job);
-        if (job) {
-            console.log('Job return value:', job.returnvalue);
-            console.log('Job data for sullivan record:', job.data);
-        }
 
         if (!job) {
             throw new NotFoundException('Job not found');
