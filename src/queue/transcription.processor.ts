@@ -33,7 +33,7 @@ export class TranscriptionProcessor {
         this.logger.log(`Video will be saved to: ${videoPath}`);
         const ytDlpPath = process.platform === 'win32'
             ? path.join(__dirname, '../../bin/yt-dlp.exe')
-            : '/usr/bin/yt-dlp';
+            : '/usr/local/bin/yt-dlp';
         const ytDlpVideoCmd = `${ytDlpPath} --cookies "${cookiesPath}" -f best -o "${videoPath}" "${videoUrl}"`;
         this.logger.log(`yt-dlp video command: ${ytDlpVideoCmd}`);
         try {
