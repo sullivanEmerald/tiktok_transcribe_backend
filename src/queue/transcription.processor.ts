@@ -28,14 +28,9 @@ export class TranscriptionProcessor {
             ? path.join(__dirname, '../../cookies.txt')
             : '/app/cookies.txt';
 
-        // 1. Download original video using yt-dlp (best quality)
-        const videoPath = path.join(tempDir, `${job.id}.mp4`);
-        this.logger.log(`Video will be saved to: ${videoPath}`);
-        const ytDlpPath = process.platform === 'win32'
-            ? path.join(__dirname, '../../bin/yt-dlp.exe')
-            : '/usr/local/bin/yt-dlp';
-        // Use impersonation only for TikTok
         const isTikTok = videoUrl.includes('tiktok.com');
+        const isYouTube = videoUrl.includes('youtube.com') || videoUrl.includes('youtu.be');
+
         const tiktokFlags = isTikTok
             ? [
                 '--impersonate chrome',
@@ -44,7 +39,28 @@ export class TranscriptionProcessor {
                 '--extractor-args "tiktok:api_hostname=api22-normal-c-useast2a.tiktokv.com"'
             ].join(' ')
             : '';
-        const ytDlpVideoCmd = `${ytDlpPath} ${tiktokFlags} --cookies "${cookiesPath}" -f "bv*+ba/b" -o "${videoPath}" "${videoUrl}"`;
+
+        // YouTube-specific flags to handle bot detection and rate limiting
+        const proxyUrl = process.env.PROXY_URL; // Optional: set in .env if your server IP is blocked
+        const youtubeFlags = isYouTube
+            ? [
+                '--add-header "User-Agent:Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"',
+                '--sleep-requests 2',
+                '--sleep-interval 5',
+                '--max-sleep-interval 10',
+                proxyUrl ? `--proxy \"${proxyUrl}\"` : ''
+            ].filter(Boolean).join(' ')
+            : '';
+
+        const platformFlags = isTikTok ? tiktokFlags : isYouTube ? youtubeFlags : '';
+
+        // 1. Download original video using yt-dlp (best quality)
+        const videoPath = path.join(tempDir, `${job.id}.mp4`);
+        this.logger.log(`Video will be saved to: ${videoPath}`);
+        const ytDlpPath = process.platform === 'win32'
+            ? path.join(__dirname, '../../bin/yt-dlp.exe')
+            : '/usr/local/bin/yt-dlp';
+        const ytDlpVideoCmd = `${ytDlpPath} ${platformFlags} --cookies "${cookiesPath}" -f "bv*+ba/b" -o "${videoPath}" "${videoUrl}"`;
         this.logger.log(`yt-dlp video command: ${ytDlpVideoCmd}`);
         try {
             await new Promise((resolve, reject) => {
@@ -75,7 +91,12 @@ export class TranscriptionProcessor {
         // 2. Download audio using yt-dlp and ffmpeg (Linux-compatible)
         const audioPath = path.join(tempDir, `${job.id}.mp3`);
         this.logger.log(`Audio will be saved to: ${audioPath}`);
-        const ytDlpAudioCmd = `${ytDlpPath} ${tiktokFlags} --cookies "${cookiesPath}" -x --audio-format mp3 --keep-video -o "${audioPath}" "${videoUrl}"`;
+        let ytDlpAudioCmd: string;
+        if (isYouTube) {
+            ytDlpAudioCmd = `${ytDlpPath} ${platformFlags} --cookies "${cookiesPath}" -x --audio-format mp3 -o "/app/tmp/%(id)s.mp3" "${videoUrl}"`;
+        } else {
+            ytDlpAudioCmd = `${ytDlpPath} ${platformFlags} --cookies "${cookiesPath}" -x --audio-format mp3 --keep-video -o "${audioPath}" "${videoUrl}"`;
+        }
         this.logger.log(`yt-dlp command: ${ytDlpAudioCmd}`);
         try {
             await new Promise((resolve, reject) => {

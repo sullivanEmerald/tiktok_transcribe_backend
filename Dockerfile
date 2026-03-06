@@ -17,6 +17,10 @@ RUN apt-get update && \
     openssl && \
     rm -rf /var/lib/apt/lists/*
 
+# Install Deno for yt-dlp JS runtime (YouTube extraction)
+RUN curl -fsSL https://deno.land/install.sh | sh
+ENV PATH="/root/.deno/bin:$PATH"
+
 # Create a virtualenv - this gives us a clean pip with no Debian restrictions
 RUN python3.11 -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
