@@ -77,7 +77,6 @@ export class TranscriptionController {
         @Res() res: Response
     ) {
         console.log('Download request for job ID:', jobId, 'from IP:', req.ip);
-        console.log(typeof jobId);
         // Validate job ownership by IP
         const transcription = await this.transcriptionService.getTranscriptionByJobId(jobId);
         console.log('Transcription lookup result:', transcription);
