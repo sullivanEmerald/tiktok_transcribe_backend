@@ -39,10 +39,7 @@ RUN rustc --version && cargo --version
 RUN pip install wheel setuptools
 RUN pip install curl-cffi
 RUN pip install --upgrade 'yt-dlp[default]'
-RUN pip install https://github.com/yt-dlp/n-sig/archive/refs/heads/master.zip
-
-
-RUN pip install bgutil-ytdlp-pot-provider
+# n-sig is now included in yt-dlp >=2024, no separate install needed
 
 # Symlink yt-dlp so it's available system-wide
 RUN ln -sf /opt/venv/bin/yt-dlp /usr/local/bin/yt-dlp
