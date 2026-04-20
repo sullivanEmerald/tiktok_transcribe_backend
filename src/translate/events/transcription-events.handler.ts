@@ -19,6 +19,7 @@ export class TranscriptionEventsHandler {
                 utterances: formatted.utterances,
                 metadata: formatted.metadata,
                 ip,
+                videoUrl
             });
             await this.cacheService.set(cacheKey, formatted, 60 * 60 * 24); // 24 hours
         } catch (err) {

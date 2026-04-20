@@ -9,9 +9,9 @@ export class TranscriptionRepository {
         @InjectModel(Transcription.name) private transcriptionModel: Model<Transcription>,
     ) { }
 
-    async create(data: { transcript: string; ip: string; utterances: any[]; metadata: any }) {
-        const { transcript, ip, utterances, metadata } = data;
-        return this.transcriptionModel.create({ transcript, ip, utterances, metadata });
+    async create(data: { transcript: string; ip: string; utterances: any[]; metadata: any, videoUrl: string }) {
+        const { transcript, ip, utterances, metadata, videoUrl } = data;
+        return this.transcriptionModel.create({ transcript, ip, utterances, metadata, videoUrl });
     }
 
     async findByJobId(jobId: string) {
