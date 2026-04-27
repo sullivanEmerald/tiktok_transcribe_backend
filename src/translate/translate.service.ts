@@ -43,7 +43,7 @@ export class TranscriptionService {
             return cached;
         }
 
-        const platformData = await this.supadataService.fetchTranscriptAndMetadata(dto.videoUrl);
+        const platformData = await this.supadataService.fetchTranscriptWithMetaData(dto.videoUrl);
         const formatted = formatSupadataTranscript(platformData);
 
         // Emit event for async DB/cache write
