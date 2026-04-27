@@ -42,9 +42,10 @@ export class SupadataService {
             if ('jobId' in transcriptResult) {
                 const startTime = Date.now();
                 const maxWait = 60000; // 1 minute timeout
+                const pollInterval = 800; // 800ms for faster polling
 
                 while (Date.now() - startTime < maxWait) {
-                    await new Promise((res) => setTimeout(res, 1000));
+                    await new Promise((res) => setTimeout(res, pollInterval));
                     const job = await this.supadata.transcript.getJobStatus(transcriptResult.jobId);
                     console.log("polling job", job);
 
