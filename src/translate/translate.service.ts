@@ -60,7 +60,7 @@ export class TranscriptionService {
             videoUrl,
         };
 
-        console.log('RETURNING METADATA AND TRANSCIPTION', jobData)
+        console.log('RETURNING METADATA AND TRANSCIPTION')
 
         return jobData;
     }

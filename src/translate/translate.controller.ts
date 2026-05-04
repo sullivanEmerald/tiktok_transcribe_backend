@@ -9,7 +9,7 @@ import { join } from 'path';
 import { RecaptchaService } from '../common/recaptcha.service';
 import { AbuseProtectionService } from '../common/abuse-protection.service';
 import { SupadataService } from 'src/common/supadata.service';
-import { formatSupadataTranscript } from 'src/common/utils/vtt-parser';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 
 @Controller('transcription')
 export class TranscriptionController {
@@ -18,6 +18,7 @@ export class TranscriptionController {
         private readonly recaptchaService: RecaptchaService,
         private readonly abuseProtection: AbuseProtectionService,
         private readonly supadataService: SupadataService,
+        private readonly eventEmitter: EventEmitter2,
     ) { }
 
     @Post()
@@ -37,8 +38,8 @@ export class TranscriptionController {
             if (!captchaValid) {
                 throw new BadRequestException({ requireCaptcha: true, message: 'CAPTCHA verification failed' });
             }
-            // Reset limiter after successful CAPTCHA
-            await this.abuseProtection.reset(ip);
+            // Reset limiter after successful CAPTCHA with Emitter event
+            this.eventEmitter.emit('abuseProtection.reset', { ip });
         }
         return this.transcriptionService.initiateTranscription(dto, ip);
 

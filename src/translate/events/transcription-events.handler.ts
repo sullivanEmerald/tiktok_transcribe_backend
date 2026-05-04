@@ -26,4 +26,5 @@ export class TranscriptionEventsHandler {
             console.log('Error handling transcription.created event:', err);
         }
     }
+
 }
