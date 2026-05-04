@@ -1,110 +1,82 @@
-import { spawn } from 'child_process';
 import { Process, Processor } from '@nestjs/bull';
 import type { Job } from 'bull';
 import { ProgressGateway } from 'src/gateways/progress.gateway';
-import { DownloaderService } from 'src/downloader/downloader.service';
-import * as fs from 'fs';
 import { ConfigService } from '@nestjs/config';
-
+import axios from 'axios';
 
 @Processor('video-download')
 export class VideoProcessor {
     constructor(
-        private gateway: ProgressGateway,
-        private downloaderService: DownloaderService,
-        private configService: ConfigService,
+        private readonly configService: ConfigService,
+        private readonly progressGateway: ProgressGateway
     ) { }
 
     @Process('download-job')
     async handleDownload(job: Job) {
-        const { videoUrl } = job.data;
-        const jobId = job.id.toString();
+        const { videoUrl, jobId } = job.data;
 
-        // ✅ Ensure downloads folder exists
-        if (!fs.existsSync('downloads')) {
-            fs.mkdirSync('downloads');
+        console.log(`Starting FastSaver job ${jobId} for URL: ${videoUrl}`);
+
+        try {
+            // 🔵 Step 1: emit start progress
+            // this.progressGateway.emitProgress(jobId, 10);
+
+            // ⚡ Step 2: call FastSaver API
+            const response = await axios.get(
+                'https://api.fastsaver.io/v1/fetch',
+                {
+                    params: {
+                        url: videoUrl,
+                    },
+                    headers: {
+                        'X-Api-Key': this.configService.get<string>('FASTSAVER_API_KEY'),
+                    },
+                }
+            );
+
+            // this.progressGateway.emitProgress(jobId, 60);
+
+            const data = response.data;
+
+            if (!data) {
+                throw new Error('Empty response from FastSaver API');
+            }
+
+            console.log(`FastSaver API response for job ${jobId}:`, data.result || data);
+
+            // 🔍 Step 3: extract video URL (API responses vary)
+            const videoDownloadUrl =
+                data?.result?.video ||
+                data?.result?.url ||
+                data?.data?.url ||
+                data?.video;
+
+            if (!videoDownloadUrl) {
+                throw new Error('No downloadable video URL found');
+            }
+
+            // this.progressGateway.emitProgress(jobId, 90);
+
+            // ✅ Step 4: complete job
+            // this.progressGateway.emitCompleted(jobId, {
+            //     videoUrl: videoDownloadUrl,
+            //     title: data?.result?.title || null,
+            //     thumbnail: data?.result?.thumbnail || null,
+            // });
+
+            return {
+                success: true,
+                videoUrl: videoDownloadUrl,
+            };
+        } catch (error) {
+            console.error('FastSaver download failed:', error);
+
+            // this.progressGateway.emitError(
+            //     jobId,
+            //     'Failed to download video'
+            // );
+
+            throw error;
         }
-
-        return new Promise((resolve, reject) => {
-            // ✅ Use jobId as filename (production-safe)
-            const outputPath = `downloads/${jobId}.%(ext)s`;
-
-            // const process = spawn('yt-dlp', [
-            //     '-o',
-            //     outputPath,
-            //     videoUrl,
-            // ]);
-
-            const process = spawn('yt-dlp', [
-                '-o',
-                outputPath,
-                '--merge-output-format', 'mp4',
-                '--no-playlist',
-
-                // '--proxy', proxy,
-
-                '-f', 'bestvideo+bestaudio/best',
-
-                // 🚀 SPEED BOOST
-                '--concurrent-fragments', '5',
-
-                //  THROTTLE BYPASS
-                '--throttled-rate', '100K',
-
-                '--user-agent',
-                'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-
-                '--add-header', 'Accept-Language:en-US,en;q=0.9',
-                '--add-header', 'Referer:https://www.tiktok.com/',
-                '--add-header', 'Accept:text/html,application/xhtml+xml',
-                '--add-header', 'Connection:keep-alive',
-
-                '--cookies', 'cookies.txt',
-
-                '--no-check-certificate',
-                '--restrict-filenames',
-
-                videoUrl,
-            ]);
-
-
-
-            process.stdout.on('data', (data) => {
-                const message = data.toString();
-                console.log(message);
-
-                // ✅ Extract progress
-                const progressMatch = message.match(/(\d+\.\d+)%/);
-                if (progressMatch) {
-                    const progress = parseFloat(progressMatch[1]);
-                    this.gateway.sendProgress(progress, 'download');
-                }
-
-
-            });
-
-            process.stderr.on('data', (data) => {
-                console.error(data.toString());
-            });
-
-            process.on('close', (code) => {
-                const finalFilePath = `downloads/${jobId}.mp4`;
-                if (code === 0 && fs.existsSync(finalFilePath)) {
-                    // ✅ store file
-                    this.downloaderService.setFile(jobId, finalFilePath);
-
-                    // ✅ generate safe API URL
-                    const fileUrl = `${this.configService.get('BASE_URL')}/api/downloader/download/${jobId}`;
-
-                    // ✅ notify frontend
-                    this.gateway.sendCompleted(fileUrl, 'download');
-
-                    resolve({ status: 'completed' });
-                } else {
-                    this.gateway.sendError('Download failed', 'download');
-                    reject(new Error('Download failed'));
-                }
-            });
-        });
     }
 }

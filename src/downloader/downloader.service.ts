@@ -11,17 +11,17 @@ export class DownloaderService {
     private readonly redisService: RedisService,
   ) { }
 
-  private downloadsMap = new Map<string, string>();
 
   async downloadVideoOnly(dto: CreateTranscriptionDto) {
     const { videoUrl } = dto;
 
-    // Add job to queue
     const job = await this.videoQueue.add('download-job', {
       videoUrl,
     }, {
       attempts: 3,
       backoff: 5000,
+      removeOnComplete: true,
+      removeOnFail: false,
     });
 
     return {

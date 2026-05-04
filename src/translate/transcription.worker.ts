@@ -38,6 +38,8 @@ export class TranscriptionWorker {
                 ip,
             });
 
+            console.log('Transcription job started for video Successful', videoUrl);
+
             this.progressGateway.sendCompleted(formatted, 'transcribe');
 
             return formatted;

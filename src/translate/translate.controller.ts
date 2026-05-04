@@ -24,7 +24,6 @@ export class TranscriptionController {
     @Post()
     async createTranscription(@Body() dto: CreateTranscriptionDto, @Req() req: Request) {
 
-
         let ip = req.ip || req.headers['x-forwarded-for'] || 'unknown';
         if (Array.isArray(ip)) ip = ip[0];
 

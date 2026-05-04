@@ -6,6 +6,7 @@ import { BullModule } from '@nestjs/bull';
 import { VideoProcessor } from 'src/queue/video.processor';
 import { ProgressGateway } from 'src/gateways/progress.gateway';
 import { RedisService } from 'src/common/redis.service';
+import { AbuseProtectionService } from 'src/common/abuse-protection.service';
 
 @Module({
   imports: [
@@ -14,7 +15,7 @@ import { RedisService } from 'src/common/redis.service';
     ),
   ],
   controllers: [DownloaderController],
-  providers: [DownloaderService, RecaptchaService, VideoProcessor, ProgressGateway, RedisService],
+  providers: [DownloaderService, RecaptchaService, VideoProcessor, ProgressGateway, RedisService, AbuseProtectionService],
   exports: [DownloaderService],
 })
 export class DownloaderModule { }
