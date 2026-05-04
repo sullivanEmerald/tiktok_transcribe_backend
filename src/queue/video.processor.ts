@@ -77,7 +77,7 @@ export class VideoProcessor {
                 const progressMatch = message.match(/(\d+\.\d+)%/);
                 if (progressMatch) {
                     const progress = parseFloat(progressMatch[1]);
-                    this.gateway.sendProgress(jobId, progress, 'download');
+                    this.gateway.sendProgress(progress, 'download');
                 }
 
 
@@ -97,11 +97,11 @@ export class VideoProcessor {
                     const fileUrl = `${this.configService.get('BASE_URL')}/api/downloader/download/${jobId}`;
 
                     // ✅ notify frontend
-                    this.gateway.sendCompleted(jobId, fileUrl, 'download');
+                    this.gateway.sendCompleted(fileUrl, 'download');
 
                     resolve({ status: 'completed' });
                 } else {
-                    this.gateway.sendError(jobId, 'Download failed', 'download');
+                    this.gateway.sendError('Download failed', 'download');
                     reject(new Error('Download failed'));
                 }
             });

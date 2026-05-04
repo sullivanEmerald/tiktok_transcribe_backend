@@ -14,14 +14,16 @@ export class TranscriptionEventsHandler {
     async handleTranscriptionCreated(event: any) {
         const { videoUrl, cacheKey, formatted, platform, ip } = event;
         try {
-            await this.transcriptionRepository.create({
-                transcript: formatted.transcript,
-                utterances: formatted.utterances,
-                metadata: formatted.metadata,
-                ip,
-                videoUrl
-            });
-            await this.cacheService.set(cacheKey, formatted, 60 * 60 * 24); // 24 hours
+            await Promise.all([
+                this.transcriptionRepository.create({
+                    transcript: formatted.transcript,
+                    utterances: formatted.utterances,
+                    metadata: formatted.metadata,
+                    ip,
+                    videoUrl
+                }),
+                this.cacheService.set(cacheKey, formatted, 60 * 60 * 24), // 24 hours
+            ]);
         } catch (err) {
             console.log('Error handling transcription.created event:', err);
         }

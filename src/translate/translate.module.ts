@@ -13,6 +13,7 @@ import { SupadataService } from 'src/common/supadata.service';
 import { TranscriptionEventsHandler } from './events/transcription-events.handler';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { AbuseProtectionEventsHandler } from './events/abuseProtection.handler';
+import { TranscriptionWorker } from './transcription.worker';
 
 @Module({
     imports: [
@@ -35,6 +36,7 @@ import { AbuseProtectionEventsHandler } from './events/abuseProtection.handler';
         SupadataService,
         TranscriptionEventsHandler,
         AbuseProtectionEventsHandler,
+        TranscriptionWorker,
     ],
     exports: [TranscriptionService],
 })

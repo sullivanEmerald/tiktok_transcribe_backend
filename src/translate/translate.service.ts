@@ -10,6 +10,7 @@ import { CacheService } from 'src/common/cache.service';
 import { SupadataService } from 'src/common/supadata.service';
 import { formatSupadataTranscript } from 'src/common/utils/vtt-parser';
 import { EventEmitter2 } from '@nestjs/event-emitter';
+import { ProgressGateway } from 'src/gateways/progress.gateway';
 
 
 
@@ -22,6 +23,7 @@ export class TranscriptionService {
         private readonly cacheService: CacheService,
         private readonly supadataService: SupadataService,
         private readonly eventEmitter: EventEmitter2,
+        private readonly progressGateway: ProgressGateway,
 
     ) {
 
@@ -37,32 +39,31 @@ export class TranscriptionService {
         }
 
         const cacheKey = `transcription:${videoUrl}`;
+
         const cached = await this.cacheService.get(cacheKey);
+
+
         if (cached) {
-            console.log(`Returning cached transcription for ${videoUrl}`);
+            console.log('cached');
+            this.progressGateway.sendCompleted(cached, 'transcribe');
             return cached;
         }
 
-        const platformData = await this.supadataService.fetchTranscriptWithMetaData(dto.videoUrl);
-        const formatted = formatSupadataTranscript(platformData);
-
-        // Emit event for async DB/cache write
-        this.eventEmitter.emit('transcription.created', {
+        // Add job to Bull queue (worker will process)
+        const job = await this.transcriptionQueue.add('transcribe-job', {
             videoUrl,
-            cacheKey,
-            formatted,
-            platform,
             ip,
+            platform,
+        }, {
+            attempts: 3,
+            backoff: 5000,
+            removeOnComplete: true,
+            removeOnFail: false,
         });
 
-        const jobData = {
-            ...formatted,
-            videoUrl,
-        };
+        // Optionally emit job queued event via WebSocket here if desired
 
-        console.log('RETURNING METADATA AND TRANSCIPTION')
-
-        return jobData;
+        return { message: 'Transcription job queued', isTranscribeAvailable: true };
     }
 
     private detectPlatform(url: string): string | null {
