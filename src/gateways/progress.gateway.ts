@@ -5,7 +5,10 @@ import {
 import { Server } from 'socket.io';
 
 @WebSocketGateway({
-    cors: true,
+    cors: {
+        origin: [process.env.FRONTEND_URL, process.env.BASE_URL, 'http://localhost:3001'],
+        credentials: true,
+    }
 })
 export class ProgressGateway {
     @WebSocketServer()
