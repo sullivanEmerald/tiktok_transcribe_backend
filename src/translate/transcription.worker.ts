@@ -21,6 +21,9 @@ export class TranscriptionWorker {
     @Process('transcribe-job')
     async handleTranscription(job: Job) {
         const { videoUrl, ip, platform } = job.data;
+        const jobId = job.id.toString();
+
+        console.log(`Starting transcription job ${jobId} for URL: ${videoUrl}`);
 
         const cacheKey = `transcription:${videoUrl}`;
 
@@ -40,11 +43,11 @@ export class TranscriptionWorker {
 
             console.log('Transcription job started for video Successful', videoUrl);
 
-            this.progressGateway.sendCompleted(formatted, 'transcribe');
+            this.progressGateway.sendCompleted(jobId, formatted, 'transcribe');
 
             return formatted;
         } catch (err) {
-            this.progressGateway.sendError(err.message, 'transcribe');
+            this.progressGateway.sendError(jobId, err.message, 'transcribe');
             throw err;
         }
     }

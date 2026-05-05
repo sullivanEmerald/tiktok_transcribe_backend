@@ -42,28 +42,32 @@ export class TranscriptionService {
 
         const cached = await this.cacheService.get(cacheKey);
 
-
         if (cached) {
             console.log('cached');
-            this.progressGateway.sendCompleted(cached, 'transcribe');
-            return cached;
+            return { cached: true, data: cached };
         }
 
-        // Add job to Bull queue (worker will process)
-        const job = await this.transcriptionQueue.add('transcribe-job', {
-            videoUrl,
-            ip,
-            platform,
-        }, {
-            attempts: 3,
-            backoff: 5000,
-            removeOnComplete: true,
-            removeOnFail: false,
-        });
+        try {
+            const platformData = await this.supadataService.fetchTranscriptWithMetaData(videoUrl);
 
-        // Optionally emit job queued event via WebSocket here if desired
+            const formatted = formatSupadataTranscript(platformData);
 
-        return { message: 'Transcription job queued', isTranscribeAvailable: true };
+            this.eventEmitter.emit('transcription.created', {
+                videoUrl,
+                cacheKey,
+                formatted,
+                platform,
+                ip,
+            });
+
+            return { data: formatted };
+        } catch (error) {
+            console.error('Error initiating transcription:', error);
+            throw new BadRequestException(error.message || 'Failed to initiate transcription. The provided URL may not be supported for transcription.');
+        }
+
+
+
     }
 
     private detectPlatform(url: string): string | null {
