@@ -11,6 +11,7 @@ import { SupadataService } from 'src/common/supadata.service';
 import { formatSupadataTranscript } from 'src/common/utils/vtt-parser';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { ProgressGateway } from 'src/gateways/progress.gateway';
+import { getClientIp } from 'src/utils/getClientIp';
 
 
 
@@ -65,9 +66,6 @@ export class TranscriptionService {
             console.error('Error initiating transcription:', error);
             throw new BadRequestException(error.message || 'Failed to initiate transcription. The provided URL may not be supported for transcription.');
         }
-
-
-
     }
 
     private detectPlatform(url: string): string | null {
@@ -78,8 +76,7 @@ export class TranscriptionService {
     }
 
     async getRecentTranscribesForIp() {
-        let ip = this.request.ip || this.request.headers['x-forwarded-for'] || 'unknown';
-        if (Array.isArray(ip)) ip = ip[0];
+        let ip = getClientIp(this.request);
         return this.transcriptionRepository.findByIp(ip);
     }
 

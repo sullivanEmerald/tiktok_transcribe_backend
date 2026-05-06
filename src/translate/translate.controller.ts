@@ -10,6 +10,7 @@ import { RecaptchaService } from '../common/recaptcha.service';
 import { AbuseProtectionService } from '../common/abuse-protection.service';
 import { SupadataService } from 'src/common/supadata.service';
 import { EventEmitter2 } from '@nestjs/event-emitter';
+import { getClientIp } from 'src/utils/getClientIp';
 
 @Controller('transcription')
 export class TranscriptionController {
@@ -24,9 +25,10 @@ export class TranscriptionController {
     @Post()
     async createTranscription(@Body() dto: CreateTranscriptionDto, @Req() req: Request) {
 
-        let ip = req.ip || req.headers['x-forwarded-for'] || 'unknown';
-        if (Array.isArray(ip)) ip = ip[0];
+        // let ip = req.ip || req.headers['x-forwarded-for'] || 'unknown';
+        // if (Array.isArray(ip)) ip = ip[0];
 
+        let ip = getClientIp(req);
         // Abuse protection check
         const abuseCheck = await this.abuseProtection.check(ip);
         if (abuseCheck.requireCaptcha) {
