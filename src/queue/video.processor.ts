@@ -18,10 +18,7 @@ export class VideoProcessor {
         console.log(`Starting FastSaver job ${jobId} for URL: ${videoUrl}`);
 
         try {
-            // 🔵 Step 1: emit start progress
-            // this.progressGateway.emitProgress(jobId, 10);
 
-            // ⚡ Step 2: call FastSaver API
             const response = await axios.get(
                 'https://api.fastsaver.io/v1/fetch',
                 {
@@ -34,9 +31,9 @@ export class VideoProcessor {
                 }
             );
 
-            // this.progressGateway.emitProgress(jobId, 60);
-
             const data = response.data;
+
+            console.log(`Raw FastSaver API response for job ${jobId}:`, data);
 
             if (!data) {
                 throw new Error('Empty response from FastSaver API');
@@ -44,7 +41,6 @@ export class VideoProcessor {
 
             console.log(`FastSaver API response for job ${jobId}:`, data.result || data);
 
-            // 🔍 Step 3: extract video URL (API responses vary)
             const videoDownloadUrl =
                 data?.result?.video ||
                 data?.result?.url ||
@@ -54,15 +50,6 @@ export class VideoProcessor {
             if (!videoDownloadUrl) {
                 throw new Error('No downloadable video URL found');
             }
-
-            // this.progressGateway.emitProgress(jobId, 90);
-
-            // ✅ Step 4: complete job
-            // this.progressGateway.emitCompleted(jobId, {
-            //     videoUrl: videoDownloadUrl,
-            //     title: data?.result?.title || null,
-            //     thumbnail: data?.result?.thumbnail || null,
-            // });
 
             return {
                 success: true,

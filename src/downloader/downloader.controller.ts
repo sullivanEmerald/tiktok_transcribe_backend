@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Logger, BadRequestException, Get, Param, NotFoundException } from '@nestjs/common';
+import { Controller, Post, Body, Logger, BadRequestException, Get, Param, HttpException, HttpStatus } from '@nestjs/common';
 import { DownloaderService } from './downloader.service';
 import { RecaptchaService } from 'src/common/recaptcha.service';
 import { CreateTranscriptionDto } from '../translate/dto/create-translate.dto';
@@ -20,7 +20,7 @@ export class DownloaderController {
     ) { }
 
     @Post('/download')
-    async downloadVideo(@Body() dto: CreateTranscriptionDto, @Req() req: Request) {
+    async downloadVideo(@Body() dto: CreateTranscriptionDto, @Req() req: Request, @Res() res: Response) {
         let ip =
             (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() ||
             req.socket?.remoteAddress ||
@@ -40,26 +40,19 @@ export class DownloaderController {
             // Reset limiter after successful CAPTCHA with Emitter event
             this.eventEmitter.emit('abuseProtection.reset', { ip });
         }
-        return this.downloaderService.downloadVideoOnly(dto);
-    }
+        try {
+            await this.downloaderService.streamVideoToClient(dto, res);
+        } catch (error) {
+            console.error('Download failed:', error.message);
 
-
-    @Get('download/:jobId')
-    async downloadFile(@Param('jobId') jobId: string, @Res() res: Response) {
-        const filePath = await this.downloaderService.getFile(jobId);
-
-        console.log('Download request:', { jobId, filePath, exists: filePath && fs.existsSync(filePath) });
-
-        if (!filePath || !fs.existsSync(filePath)) {
-            throw new NotFoundException('File not found');
-        }
-
-        return res.download(filePath, 'clip_script.mp4', (err) => {
-            if (!err) {
-                // ✅ delete after successful download
-                fs.unlinkSync(filePath);
-                this.downloaderService.removeFile(jobId);
+            // Guard: don't double-send if streaming already started
+            if (!res.headersSent) {
+                res.status(502).json({
+                    success: false,
+                    message: error.message || 'Failed to download video',
+                });
             }
-        });
+        }
     }
+
 }
