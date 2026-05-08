@@ -10,9 +10,6 @@ import { AbuseProtectionService } from 'src/common/abuse-protection.service';
 
 @Module({
   imports: [
-    BullModule.registerQueue(
-      { name: 'video-download' },
-    ),
   ],
   controllers: [DownloaderController],
   providers: [DownloaderService, RecaptchaService, ProgressGateway, RedisService, AbuseProtectionService],

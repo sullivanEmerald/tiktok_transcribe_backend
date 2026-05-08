@@ -17,9 +17,6 @@ import { AbuseProtectionEventsHandler } from './events/abuseProtection.handler';
 
 @Module({
     imports: [
-        BullModule.registerQueue(
-            { name: 'transcription' },
-        ),
         MongooseModule.forFeature([
             { name: Transcription.name, schema: TranscriptionSchema },
         ]),
