@@ -17,23 +17,23 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
     EventEmitterModule.forRoot(),
     ConfigModule.forRoot({ isGlobal: true }),
     // cast to any to bypass type error for now
-    // BullModule.forRootAsync({
-    //   useFactory: () => {
-    //     return {
-    //       connection: process.env.REDIS_URL
-    //         ? {
-    //           url: process.env.REDIS_URL,
-    //           maxRetriesPerRequest: null,
-    //           enableReadyCheck: false,
-    //         }
-    //         : {
-    //           host: 'localhost',
-    //           port: 6379,
-    //           maxRetriesPerRequest: null,
-    //         },
-    //     };
-    //   },
-    // }),
+    BullModule.forRootAsync({
+      useFactory: () => {
+        return {
+          connection: process.env.REDIS_URL
+            ? {
+              url: process.env.REDIS_URL,
+              maxRetriesPerRequest: null,
+              enableReadyCheck: false,
+            }
+            : {
+              host: 'localhost',
+              port: 6379,
+              maxRetriesPerRequest: null,
+            },
+        };
+      },
+    }),
     MongooseModule.forRoot(process.env.MONGODB_URI || ''),
     TranslateModule,
     DownloaderModule,

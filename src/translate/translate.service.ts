@@ -1,17 +1,12 @@
 // transcription.service.ts
 import { Injectable, BadRequestException, NotFoundException, Inject } from '@nestjs/common';
-import { InjectQueue } from '@nestjs/bullmq';
-import type { Queue } from 'bull';
 import { CreateTranscriptionDto as CreateTranscriptionDto } from './dto/create-translate.dto';
 import { TranscriptionRepository } from './transcription.repository';
-import type { Request } from 'express';
-import type { Job } from 'bull';
 import { CacheService } from 'src/common/cache.service';
 import { SupadataService } from 'src/common/supadata.service';
 import { formatSupadataTranscript } from 'src/common/utils/vtt-parser';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { ProgressGateway } from 'src/gateways/progress.gateway';
-import { getClientIp } from 'src/utils/getClientIp';
 
 
 
