@@ -1,6 +1,5 @@
 // downloader.service.ts
 import { Injectable } from '@nestjs/common';
-import { InjectQueue } from '@nestjs/bull';
 import type { Queue } from 'bull';
 import { CreateTranscriptionDto } from '../translate/dto/create-translate.dto';
 import { RedisService } from 'src/common/redis.service';
@@ -14,7 +13,6 @@ type VideoPlatform = 'tiktok' | 'instagram' | 'youtube' | 'unknown';
 @Injectable()
 export class DownloaderService {
   constructor(
-    @InjectQueue('video-download') private readonly videoQueue: Queue,
     private readonly redisService: RedisService,
     private readonly configService: ConfigService,
   ) { }

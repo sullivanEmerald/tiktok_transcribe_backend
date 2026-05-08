@@ -1,6 +1,6 @@
 // transcription.service.ts
 import { Injectable, BadRequestException, NotFoundException, Inject } from '@nestjs/common';
-import { InjectQueue } from '@nestjs/bull';
+import { InjectQueue } from '@nestjs/bullmq';
 import type { Queue } from 'bull';
 import { CreateTranscriptionDto as CreateTranscriptionDto } from './dto/create-translate.dto';
 import { TranscriptionRepository } from './transcription.repository';
@@ -18,9 +18,7 @@ import { getClientIp } from 'src/utils/getClientIp';
 @Injectable()
 export class TranscriptionService {
     constructor(
-        @InjectQueue('transcription') private transcriptionQueue: Queue,
         private readonly transcriptionRepository: TranscriptionRepository,
-        @Inject('REQUEST') private readonly request: Request,
         private readonly cacheService: CacheService,
         private readonly supadataService: SupadataService,
         private readonly eventEmitter: EventEmitter2,
@@ -61,6 +59,8 @@ export class TranscriptionService {
                 ip,
             });
 
+            console.log('formatted', formatted)
+
             return { data: formatted };
         } catch (error) {
             console.error('Error initiating transcription:', error);
@@ -75,8 +75,7 @@ export class TranscriptionService {
         return null;
     }
 
-    async getRecentTranscribesForIp() {
-        let ip = getClientIp(this.request);
+    async getRecentTranscribesForIp(ip: string) {
         return this.transcriptionRepository.findByIp(ip);
     }
 

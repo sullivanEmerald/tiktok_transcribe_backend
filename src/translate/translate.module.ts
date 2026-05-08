@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { BullModule } from '@nestjs/bull';
+import { BullModule } from '@nestjs/bullmq';
 import { TranscriptionService } from './translate.service';
 import { TranscriptionController } from './translate.controller';
 import { MongooseModule } from '@nestjs/mongoose';
@@ -13,13 +13,13 @@ import { SupadataService } from 'src/common/supadata.service';
 import { TranscriptionEventsHandler } from './events/transcription-events.handler';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { AbuseProtectionEventsHandler } from './events/abuseProtection.handler';
-import { TranscriptionWorker } from './transcription.worker';
+// import { TranscriptionWorker } from './transcription.worker';
 
 @Module({
     imports: [
-        BullModule.registerQueue(
-            { name: 'transcription' },
-        ),
+        // BullModule.registerQueue(
+        //     { name: 'transcription' },
+        // ),
         MongooseModule.forFeature([
             { name: Transcription.name, schema: TranscriptionSchema },
         ]),
@@ -36,7 +36,7 @@ import { TranscriptionWorker } from './transcription.worker';
         SupadataService,
         TranscriptionEventsHandler,
         AbuseProtectionEventsHandler,
-        TranscriptionWorker,
+        // TranscriptionWorker,
     ],
     exports: [TranscriptionService],
 })
