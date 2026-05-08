@@ -17,8 +17,6 @@ export class TranscriptionService {
         private readonly cacheService: CacheService,
         private readonly supadataService: SupadataService,
         private readonly eventEmitter: EventEmitter2,
-        private readonly progressGateway: ProgressGateway,
-
     ) {
 
     }
