@@ -57,7 +57,12 @@ export class TranscriptionService {
             return { data: formatted };
         } catch (error) {
             console.error('Error initiating transcription:', error);
-            throw new BadRequestException(error.message || 'Failed to initiate transcription. The provided URL may not be supported for transcription.');
+            const errorMessage =
+                error?.response?.data?.message ||
+                error?.response?.data?.error ||
+                error?.message ||
+                'Failed to initiate transcription. The provided URL may not be supported.';
+            throw new BadRequestException(errorMessage);
         }
     }
 

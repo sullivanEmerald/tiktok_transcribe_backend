@@ -25,24 +25,37 @@ export class TranscriptionController {
     @Post()
     async createTranscription(@Body() dto: CreateTranscriptionDto, @Req() req: Request) {
 
-        console.log("createDto", dto)
-
-        // let ip = req.ip || req.headers['x-forwarded-for'] || 'unknown';
-        // if (Array.isArray(ip)) ip = ip[0];
 
         let ip = getClientIp(req);
+
         // Abuse protection check
-        const abuseCheck = await this.abuseProtection.check(ip);
+        const abuseCheck = await this.abuseProtection.checkTranscriptionAbuse(ip);
+
+        if (!abuseCheck.allowed) {
+            throw new BadRequestException({
+                requireCaptcha: false,
+                message: abuseCheck?.message,
+            });
+        }
+
         if (abuseCheck.requireCaptcha) {
             if (!dto.captchaToken) {
-                throw new BadRequestException({ requireCaptcha: true, message: 'CAPTCHA token is required due to high usage' });
+                throw new BadRequestException({
+                    requireCaptcha: true,
+                    message: 'Complete the captcha to continue',
+                });
             }
-            const captchaValid = await this.recaptchaService.verify(dto.captchaToken);
-            if (!captchaValid) {
-                throw new BadRequestException({ requireCaptcha: true, message: 'CAPTCHA verification failed' });
+
+            const valid = await this.recaptchaService.verify(dto.captchaToken);
+
+            if (!valid) {
+                throw new BadRequestException({
+                    requireCaptcha: true,
+                    message: 'Invalid CAPTCHA',
+                });
             }
-            // Reset limiter after successful CAPTCHA with Emitter event
-            this.eventEmitter.emit('abuseProtection.reset', { ip });
+
+            await this.abuseProtection.reset(ip);
         }
         return this.transcriptionService.initiateTranscription(dto, ip);
 

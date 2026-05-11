@@ -2,12 +2,13 @@ import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { TranslateModule } from './translate/translate.module';
-import { ThrottlerModule } from '@nestjs/throttler';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { ConfigModule } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { DownloaderModule } from './downloader/downloader.module';
 import { CacheService } from './common/cache.service';
 import { EventEmitterModule } from '@nestjs/event-emitter';
+import { APP_GUARD } from '@nestjs/core';
 
 
 @Module({
@@ -15,6 +16,14 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
     EventEmitterModule.forRoot(),
     ConfigModule.forRoot({ isGlobal: true }),
     // cast to any to bypass type error for now
+    // ThrottlerModule.forRoot({
+    //   throttlers: [
+    //     {
+    //       ttl: 60000,
+    //       limit: 5,
+    //     },
+    //   ],
+    // }),
     MongooseModule.forRoot(process.env.MONGODB_URI || ''),
     TranslateModule,
     DownloaderModule,
@@ -23,6 +32,12 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
   providers: [
     AppService,
     CacheService,
+
+    // {
+    //   provide: APP_GUARD,
+    //   useClass: ThrottlerGuard
+    // }
+
   ],
   exports: [CacheService],
 })

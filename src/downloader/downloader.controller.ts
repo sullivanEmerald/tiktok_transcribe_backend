@@ -2,11 +2,11 @@ import { Controller, Post, Body, Logger, BadRequestException, Get, Param, HttpEx
 import { DownloaderService } from './downloader.service';
 import { RecaptchaService } from 'src/common/recaptcha.service';
 import { CreateTranscriptionDto } from '../translate/dto/create-translate.dto';
-import * as fs from 'fs';
 import { AbuseProtectionService } from 'src/common/abuse-protection.service';
 import type { Response, Request } from 'express';
 import { Res, Req } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
+import { getClientIp } from 'src/utils/getClientIp';
 
 @Controller('downloader')
 export class DownloaderController {
@@ -21,14 +21,10 @@ export class DownloaderController {
 
     @Post('/download')
     async downloadVideo(@Body() dto: CreateTranscriptionDto, @Req() req: Request, @Res() res: Response) {
-        let ip =
-            (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() ||
-            req.socket?.remoteAddress ||
-            req.ip ||
-            'unknown';
+        let ip = getClientIp(req)
 
         // Abuse protection check
-        const abuseCheck = await this.abuseProtection.check(ip);
+        const abuseCheck = await this.abuseProtection.checkTranscriptionAbuse(ip);
         if (abuseCheck.requireCaptcha) {
             if (!dto.captchaToken) {
                 throw new BadRequestException({ requireCaptcha: true, message: 'CAPTCHA token is required due to high usage' });
