@@ -28,16 +28,15 @@ export class SupadataService {
     // Fetch transcript with polling, then metadata sequentially to avoid rate limiting
     async fetchTranscriptWithMetaData(videoUrl: string) {
         try {
-            // 1. Fetch transcript first
-            const transcriptResult = await this.supadata.transcript({
-                url: videoUrl,
-                text: false,
-                mode: 'auto',
-                lang: 'en',
-            });
-
-            // 2. Then fetch metadata
-            const metadata = await this.fetchMetadata(videoUrl);
+            const [transcriptResult, metadata] = await Promise.all([
+                this.supadata.transcript({
+                    url: videoUrl,
+                    text: false,
+                    mode: 'auto',
+                    lang: 'en',
+                }),
+                this.fetchMetadata(videoUrl),
+            ]);
 
             if ('jobId' in transcriptResult) {
                 const startTime = Date.now();
@@ -61,7 +60,7 @@ export class SupadataService {
                     }
                 }
 
-                throw new Error('Timeout');
+                throw new Error('The Transcription is not available now');
             }
 
             return {
