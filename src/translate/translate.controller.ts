@@ -71,8 +71,9 @@ export class TranscriptionController {
     @Get('/recent')
     async getRecentTranscribesForIp(@Req() req: Request) {
         let ip = getClientIp(req);
-        console.log('Fetching recent transcriptions for IP');
-        return this.transcriptionService.getRecentTranscribesForIp(ip);
+        const result = await this.transcriptionService.getRecentTranscribesForIp(ip);
+        console.log(result)
+        return result;
     }
 
     @Get(':id')
