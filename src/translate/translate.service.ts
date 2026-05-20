@@ -7,6 +7,7 @@ import { SupadataService } from 'src/common/supadata.service';
 import { formatSupadataTranscript } from 'src/common/utils/vtt-parser';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { ProgressGateway } from 'src/gateways/progress.gateway';
+import { TRANSCRIPTION_EVENTS } from './events/transscibe.types';
 
 
 
@@ -21,7 +22,7 @@ export class TranscriptionService {
 
     }
 
-    async initiateTranscription(dto: CreateTranscriptionDto, ip: string) {
+    async initiateTranscription(dto: CreateTranscriptionDto, ip: string, deviceId: string) {
         const { videoUrl } = dto;
         // Validate URL and platform
         const platform = this.detectPlatform(videoUrl);
@@ -44,12 +45,14 @@ export class TranscriptionService {
 
             const formatted = formatSupadataTranscript(platformData);
 
-            this.eventEmitter.emit('transcription.created', {
+            this.eventEmitter.emit(TRANSCRIPTION_EVENTS.CREATED, {
                 videoUrl,
                 cacheKey,
                 formatted,
                 platform,
                 ip,
+                deviceId
+
             });
 
             console.log('formatted', formatted)
@@ -73,8 +76,8 @@ export class TranscriptionService {
         return null;
     }
 
-    async getRecentTranscribesForIp(ip: string) {
-        return this.transcriptionRepository.findByIp(ip);
+    async getRecentTranscribesPerUser(deviceId: string) {
+        return this.transcriptionRepository.findByDeviceId(deviceId);
     }
 
     async getTranscription(id: string) {

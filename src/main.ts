@@ -1,9 +1,10 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { IoAdapter } from '@nestjs/platform-socket.io';
+import { NestExpressApplication } from '@nestjs/platform-express';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
   app.setGlobalPrefix('api');
 
   const frontendUrl = process.env.FRONTEND_URL || 'https://tiktok-transcribe-frontend.vercel.app';
@@ -15,7 +16,7 @@ async function bootstrap() {
   });
   // Set up the Socket.IO adapter
   app.useWebSocketAdapter(new IoAdapter(app));
-
+  app.set('trust proxy', true);
   const port = process.env.PORT ?? 3001;
   await app.listen(port);
   console.log(`Server is running on port ${port}`);

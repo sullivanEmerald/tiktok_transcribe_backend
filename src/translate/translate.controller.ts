@@ -1,5 +1,5 @@
 // transcription.controller.ts
-import { Controller, Post, Body, Get, Param, UseGuards, BadRequestException } from '@nestjs/common';
+import { Controller, Post, Body, Get, Param, UseGuards, BadRequestException, Headers } from '@nestjs/common';
 import { TranscriptionService } from './translate.service';
 import { CreateTranscriptionDto } from './dto/create-translate.dto';
 import type { Response, Request } from 'express';
@@ -23,10 +23,14 @@ export class TranscriptionController {
     ) { }
 
     @Post()
-    async createTranscription(@Body() dto: CreateTranscriptionDto, @Req() req: Request) {
+    async createTranscription(@Body() dto: CreateTranscriptionDto, @Req() req: Request, @Headers('x-device-id') deviceId: string,) {
 
 
         let ip = getClientIp(req);
+
+        if (!deviceId) {
+            throw new BadRequestException('Something went wrong. contact support');
+        }
 
         // Abuse protection check
         const abuseCheck = await this.abuseProtection.checkTranscriptionAbuse(ip);
@@ -57,7 +61,8 @@ export class TranscriptionController {
 
             await this.abuseProtection.reset(ip);
         }
-        return this.transcriptionService.initiateTranscription(dto, ip);
+
+        return this.transcriptionService.initiateTranscription(dto, ip, deviceId);
 
     }
 
@@ -69,9 +74,11 @@ export class TranscriptionController {
     // }
 
     @Get('/recent')
-    async getRecentTranscribesForIp(@Req() req: Request) {
-        let ip = getClientIp(req);
-        const result = await this.transcriptionService.getRecentTranscribesForIp(ip);
+    async getRecentTranscribesPerUser(@Req() req: Request, @Headers('x-device-id') deviceId: string,) {
+        if (!deviceId) {
+            throw new BadRequestException('Something went wrong. contact support');
+        }
+        const result = await this.transcriptionService.getRecentTranscribesPerUser(deviceId);
         console.log(result)
         return result;
     }
