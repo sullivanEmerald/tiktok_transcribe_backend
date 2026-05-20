@@ -17,20 +17,38 @@ export class TranscriptionEventsHandler {
     async handleTranscriptionCreated(event: any) {
         const { videoUrl, cacheKey, formatted, platform, ip, deviceId } = event;
         try {
+
+            await this.transcriptionRepository.create({
+                transcript: formatted.transcript,
+                utterances: formatted.utterances,
+                metadata: formatted.metadata,
+                ip,
+                videoUrl,
+                deviceId,
+            });
+
             await Promise.all([
-                this.transcriptionRepository.create({
-                    transcript: formatted.transcript,
-                    utterances: formatted.utterances,
-                    metadata: formatted.metadata,
-                    ip,
-                    videoUrl,
-                    deviceId
-                }),
-                this.cacheService.set(cacheKey, formatted, 60 * 60 * 24), // 24 hours
+                this.cacheService.set(
+                    cacheKey,
+                    formatted,
+                    60 * 60 * 24,
+                ),
+                this.cacheService.del(`user:${deviceId}`),
             ]);
         } catch (err) {
             this.logger.error(err);
             throw err;
+        }
+    }
+
+    @OnEvent(TRANSCRIPTION_EVENTS.FETCHED)
+    async handleUserTranscriptions(event: any) {
+        const { cacheKey, userTranscripts } = event;
+        try {
+            await this.cacheService.set(cacheKey, userTranscripts, 60 * 60 * 24)
+        } catch (error) {
+            this.logger.error(error)
+            throw error;
         }
     }
 

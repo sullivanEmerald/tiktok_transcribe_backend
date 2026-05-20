@@ -79,7 +79,6 @@ export class TranscriptionController {
             throw new BadRequestException('Something went wrong. contact support');
         }
         const result = await this.transcriptionService.getRecentTranscribesPerUser(deviceId);
-        console.log(result)
         return result;
     }
 

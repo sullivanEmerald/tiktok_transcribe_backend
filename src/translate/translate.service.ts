@@ -22,6 +22,21 @@ export class TranscriptionService {
 
     }
 
+
+    private normalizeVideoUrl(url: string) {
+        try {
+            const parsed = new URL(url);
+
+            // remove query params
+            parsed.search = '';
+
+            // remove trailing slash
+            return parsed.toString().replace(/\/$/, '');
+        } catch {
+            return url;
+        }
+    }
+
     async initiateTranscription(dto: CreateTranscriptionDto, ip: string, deviceId: string) {
         const { videoUrl } = dto;
         // Validate URL and platform
@@ -31,7 +46,9 @@ export class TranscriptionService {
             throw new BadRequestException('Unsupported platform');
         }
 
-        const cacheKey = `transcription:${videoUrl}`;
+        const normalizedUrl = this.normalizeVideoUrl(videoUrl);
+
+        const cacheKey = `transcription:${normalizedUrl}`;
 
         const cached = await this.cacheService.get(cacheKey);
 
@@ -77,7 +94,23 @@ export class TranscriptionService {
     }
 
     async getRecentTranscribesPerUser(deviceId: string) {
-        return this.transcriptionRepository.findByDeviceId(deviceId);
+        const cacheKey = `user:${deviceId}`
+
+        const cached = await this.cacheService.get(cacheKey);
+
+        if (cached) {
+            console.log('cached user transcriptions');
+            return cached;
+        }
+        const userTranscripts = await this.transcriptionRepository.findByDeviceId(deviceId);
+
+        this.eventEmitter.emit(TRANSCRIPTION_EVENTS.FETCHED, {
+            cacheKey,
+            userTranscripts
+        });
+
+        return userTranscripts;
+
     }
 
     async getTranscription(id: string) {
