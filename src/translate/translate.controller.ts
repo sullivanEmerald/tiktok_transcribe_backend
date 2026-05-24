@@ -1,5 +1,5 @@
 // transcription.controller.ts
-import { Controller, Post, Body, Get, Param, UseGuards, BadRequestException, Headers } from '@nestjs/common';
+import { Controller, Post, Body, Get, Param, UseGuards, BadRequestException, Headers, Put } from '@nestjs/common';
 import { TranscriptionService } from './translate.service';
 import { CreateTranscriptionDto } from './dto/create-translate.dto';
 import type { Response, Request } from 'express';
@@ -67,12 +67,6 @@ export class TranscriptionController {
     }
 
 
-
-    // @Get(':jobId/result')
-    // async getResult(@Param('jobId') jobId: string) {
-    //     return this.transcriptionService.getJobResult(jobId);
-    // }
-
     @Get('/recent')
     async getRecentTranscribesPerUser(@Req() req: Request, @Headers('x-device-id') deviceId: string,) {
         if (!deviceId) {
@@ -88,6 +82,11 @@ export class TranscriptionController {
         const result = await this.transcriptionService.getTranscription(id);
         console.log('Fetched transcription for job ID:', id, 'Result:', result);
         return result;
+    }
+
+    @Put(':id/rename')
+    async renameTranscription(@Param('id') id: string, @Body() dto: { newName: string }, @Headers('x-device-id') deviceId: string,) {
+        return this.transcriptionService.renameTranscription(id, dto.newName, deviceId);
     }
 
     @Get(':jobId/download')

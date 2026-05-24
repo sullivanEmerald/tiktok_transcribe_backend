@@ -52,4 +52,15 @@ export class TranscriptionEventsHandler {
         }
     }
 
+    @OnEvent(TRANSCRIPTION_EVENTS.UPDATED)
+    async handleTranscriptionUpdated(event: any) {
+        const { deviceId } = event;
+        try {
+            await this.cacheService.del(`user:${deviceId}`);
+        } catch (error) {
+            this.logger.error(error)
+            throw error;
+        }
+    }
+
 }

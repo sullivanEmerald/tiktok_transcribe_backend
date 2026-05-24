@@ -1,5 +1,5 @@
 // transcription.service.ts
-import { Injectable, BadRequestException, NotFoundException, Inject } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException, Inject, HttpStatus } from '@nestjs/common';
 import { CreateTranscriptionDto as CreateTranscriptionDto } from './dto/create-translate.dto';
 import { TranscriptionRepository } from './transcription.repository';
 import { CacheService } from 'src/common/cache.service';
@@ -8,7 +8,6 @@ import { formatSupadataTranscript } from 'src/common/utils/vtt-parser';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { ProgressGateway } from 'src/gateways/progress.gateway';
 import { TRANSCRIPTION_EVENTS } from './events/transscibe.types';
-
 
 
 @Injectable()
@@ -119,6 +118,24 @@ export class TranscriptionService {
 
     async getTranscriptionByJobId(id: string) {
         return this.transcriptionRepository.findByJobId(id);
+    }
+
+    async renameTranscription(id: string, newName: string, deviceId: string) {
+        const transcription = await this.transcriptionRepository.fetchByJobId(id);
+
+        if (!transcription) {
+            throw new NotFoundException('Transcription not found');
+        }
+
+        transcription.title = newName;
+
+        await transcription.save();
+
+        this.eventEmitter.emit(TRANSCRIPTION_EVENTS.UPDATED, {
+            deviceId
+        });
+
+        return HttpStatus.OK;
     }
 
 }

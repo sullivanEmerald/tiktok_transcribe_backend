@@ -38,6 +38,9 @@ export class Transcription extends Document {
     @Prop({ required: true })
     transcript: string;
 
+    @Prop({ default: null })
+    title?: string;
+
     @Prop({ required: true, index: true })
     ip: string;
 

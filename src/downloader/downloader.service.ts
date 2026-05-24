@@ -96,6 +96,8 @@ export class DownloaderService {
   async streamVideoToClient(dto: CreateTranscriptionDto, res: Response) {
     const meta = await this.getVideoMeta(dto);
 
+    console.log(meta.download_url);
+
 
     // Fetch the actual video as a stream — do NOT buffer it all in memory
     const videoStream = await axios.get<NodeJS.ReadableStream>(meta.download_url, {
