@@ -1,7 +1,5 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { Supadata } from '@supadata/js';
-
-
 
 @Injectable()
 export class SupadataService {
@@ -9,23 +7,27 @@ export class SupadataService {
 
     constructor() {
         const apiKey = process.env.SD_API_KEY;
+
         if (!apiKey) {
             throw new Error('SD_API_KEY environment variable is required');
         }
+
         this.supadata = new Supadata({ apiKey });
     }
 
-
-    // Fetch Metadata using direct call
+    // Fetch Metadata safely so it doesn't crash Promise.all
     async fetchMetadata(videoUrl: string) {
         try {
-            return await this.supadata.metadata({ url: videoUrl });
+            return await this.supadata.metadata({
+                url: videoUrl,
+            });
         } catch (error) {
-            console.log('the error fetching metadata', error)
+            console.error('Error fetching metadata:', error);
+            return null;
         }
     }
 
-    // Fetch transcript with polling, then metadata sequentially to avoid rate limiting
+    // Fetch transcript with polling and metadata
     async fetchTranscriptWithMetaData(videoUrl: string) {
         try {
             const [transcriptResult, metadata] = await Promise.all([
@@ -35,18 +37,18 @@ export class SupadataService {
                     mode: 'auto',
                     lang: 'en',
                 }),
+
                 this.fetchMetadata(videoUrl),
             ]);
 
             if ('jobId' in transcriptResult) {
                 const startTime = Date.now();
                 const maxWait = 60000; // 1 minute timeout
-                const pollInterval = 800; // 800ms for faster polling
+                const pollInterval = 800;
 
                 while (Date.now() - startTime < maxWait) {
                     await new Promise((res) => setTimeout(res, pollInterval));
                     const job = await this.supadata.transcript.getJobStatus(transcriptResult.jobId);
-                    console.log("polling job", job);
 
                     if (job.status === 'completed') {
                         return {
@@ -56,11 +58,31 @@ export class SupadataService {
                     }
 
                     if (job.status === 'failed') {
-                        throw new Error('Transcription failed');
+                        const errorCode = job.error?.error;
+                        const errorMessage = job.error?.message || '';
+
+                        if (
+                            errorCode === 'not-found' ||
+                            errorMessage.toLowerCase().includes('private') ||
+                            errorMessage.toLowerCase().includes('restricted')
+                        ) {
+                            throw new HttpException(
+                                'No data available for this video. It may be private, removed, or restricted.',
+                                HttpStatus.BAD_REQUEST,
+                            );
+                        }
+
+                        throw new HttpException(
+                            `Transcription failed: ${errorMessage}`,
+                            HttpStatus.INTERNAL_SERVER_ERROR,
+                        );
                     }
                 }
 
-                throw new Error('The Transcription is not available now');
+                throw new HttpException(
+                    'The Transcription timed out',
+                    HttpStatus.REQUEST_TIMEOUT,
+                );
             }
 
             return {
@@ -69,12 +91,27 @@ export class SupadataService {
             };
         } catch (error) {
             console.error('Supadata error:', error);
-            throw error;
+
+            if (error instanceof HttpException) {
+                throw error;
+            }
+
+            const errMsg = error?.message || '';
+
+            if (
+                errMsg.includes('not-found') ||
+                errMsg.includes('private')
+            ) {
+                throw new HttpException(
+                    'No data available for this video. It may be private, removed, or restricted.',
+                    HttpStatus.BAD_REQUEST,
+                );
+            }
+
+            throw new HttpException(
+                error?.details ? 'No data available for this video. It may be private, removed, or restricted.' : 'Internal server error',
+                HttpStatus.INTERNAL_SERVER_ERROR,
+            );
         }
     }
-
 }
-
-
-
-
