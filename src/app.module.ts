@@ -9,6 +9,7 @@ import { DownloaderModule } from './downloader/downloader.module';
 import { CacheService } from './common/cache.service';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { APP_GUARD } from '@nestjs/core';
+import { UsersModule } from './users/users.module';
 
 
 @Module({
@@ -27,6 +28,7 @@ import { APP_GUARD } from '@nestjs/core';
     MongooseModule.forRoot(process.env.MONGODB_URI || ''),
     TranslateModule,
     DownloaderModule,
+    UsersModule,
   ],
   controllers: [AppController],
   providers: [

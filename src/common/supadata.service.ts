@@ -41,6 +41,8 @@ export class SupadataService {
                 this.fetchMetadata(videoUrl),
             ]);
 
+            console.log('Supadata transcript result:', transcriptResult);
+
             if ('jobId' in transcriptResult) {
                 const startTime = Date.now();
                 const maxWait = 60000; // 1 minute timeout
