@@ -20,8 +20,12 @@ export class CacheService {
         return value ? JSON.parse(value) : null;
     }
 
-    async set(key: string, value: any, ttlSeconds = 86400): Promise<void> {
-        await this.redis.set(key, JSON.stringify(value), 'EX', ttlSeconds);
+    async set(key: string, value: any, ttlSeconds?: number): Promise<void> {
+        if (ttlSeconds) {
+            await this.redis.set(key, JSON.stringify(value), 'EX', ttlSeconds);
+        } else {
+            await this.redis.set(key, JSON.stringify(value));
+        }
     }
 
     async del(key: string): Promise<void> {

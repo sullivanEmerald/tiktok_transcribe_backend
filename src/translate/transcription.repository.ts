@@ -9,9 +9,9 @@ export class TranscriptionRepository {
         @InjectModel(Transcription.name) private transcriptionModel: Model<Transcription>,
     ) { }
 
-    async create(data: { transcript: string; ip: string; utterances: any[]; metadata: any, videoUrl: string, deviceId: string }) {
-        const { transcript, ip, utterances, metadata, videoUrl, deviceId } = data;
-        return this.transcriptionModel.create({ transcript, ip, utterances, metadata, videoUrl, deviceId });
+    async create(data: { transcript: string; ip: string; utterances: any[]; metadata: any, videoUrl: string, userId: string }) {
+        const { transcript, ip, utterances, metadata, videoUrl, userId } = data;
+        return this.transcriptionModel.create({ transcript, ip, utterances, metadata, videoUrl, userId });
     }
 
     async findByJobId(jobId: string) {
@@ -23,7 +23,7 @@ export class TranscriptionRepository {
         return this.transcriptionModel.findById(id);
     }
 
-    async findByDeviceId(deviceId: string) {
-        return this.transcriptionModel.find({ deviceId }).sort({ createdAt: -1 }).limit(10);
+    async findByUserId(userId: string) {
+        return this.transcriptionModel.find({ userId }).sort({ createdAt: -1 }).limit(10);
     }
 }

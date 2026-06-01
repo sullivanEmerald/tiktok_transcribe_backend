@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, NestModule, MiddlewareConsumer } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { TranslateModule } from './translate/translate.module';
@@ -10,6 +10,7 @@ import { CacheService } from './common/cache.service';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { APP_GUARD } from '@nestjs/core';
 import { UsersModule } from './users/users.module';
+import { GuestMiddleware } from './common/middleware/guest.middleware';
 
 
 @Module({
@@ -43,4 +44,8 @@ import { UsersModule } from './users/users.module';
   ],
   exports: [CacheService],
 })
-export class AppModule { }
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(GuestMiddleware).forRoutes('*');
+  }
+}

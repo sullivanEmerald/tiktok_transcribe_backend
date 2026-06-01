@@ -45,7 +45,7 @@ export class Transcription extends Document {
     ip: string;
 
     @Prop({ required: true, index: true })
-    deviceId: string;
+    userId: string;
 
     @Prop({ required: true })
     videoUrl: string;

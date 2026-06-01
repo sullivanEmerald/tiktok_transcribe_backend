@@ -11,6 +11,7 @@ import { AbuseProtectionService } from '../common/abuse-protection.service';
 import { SupadataService } from 'src/common/supadata.service';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { getClientIp } from 'src/utils/getClientIp';
+import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 
 @Controller('transcription')
 export class TranscriptionController {
@@ -23,12 +24,11 @@ export class TranscriptionController {
     ) { }
 
     @Post()
-    async createTranscription(@Body() dto: CreateTranscriptionDto, @Req() req: Request, @Headers('x-device-id') deviceId: string,) {
-
+    async createTranscription(@Body() dto: CreateTranscriptionDto, @CurrentUser() user: any, @Req() req: Request) {
 
         let ip = getClientIp(req);
 
-        if (!deviceId) {
+        if (!user.guestId) {
             throw new BadRequestException('Something went wrong. contact support');
         }
 
@@ -62,17 +62,17 @@ export class TranscriptionController {
             await this.abuseProtection.reset(ip);
         }
 
-        return this.transcriptionService.initiateTranscription(dto, ip, deviceId);
+        return this.transcriptionService.initiateTranscription(dto, ip, user.guestId);
 
     }
 
 
     @Get('/recent')
-    async getRecentTranscribesPerUser(@Req() req: Request, @Headers('x-device-id') deviceId: string,) {
-        if (!deviceId) {
+    async getRecentTranscribesPerUser(@Req() req: Request, @CurrentUser() user: any) {
+        if (!user.guestId) {
             throw new BadRequestException('Something went wrong. contact support');
         }
-        const result = await this.transcriptionService.getRecentTranscribesPerUser(deviceId);
+        const result = await this.transcriptionService.getRecentTranscribesPerUser(user.guestId);
         return result;
     }
 
@@ -85,8 +85,8 @@ export class TranscriptionController {
     }
 
     @Put(':id/rename')
-    async renameTranscription(@Param('id') id: string, @Body() dto: { newName: string }, @Headers('x-device-id') deviceId: string,) {
-        return this.transcriptionService.renameTranscription(id, dto.newName, deviceId);
+    async renameTranscription(@Param('id') id: string, @Body() dto: { newName: string }, @CurrentUser() user: any) {
+        return this.transcriptionService.renameTranscription(id, dto.newName, user.guestId);
     }
 
     @Get(':jobId/download')

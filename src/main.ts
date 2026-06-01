@@ -3,10 +3,13 @@ import { AppModule } from './app.module';
 import { IoAdapter } from '@nestjs/platform-socket.io';
 import { NestExpressApplication } from '@nestjs/platform-express';
 
+// replace ES import with require to avoid "cookieParser is not a function" issues
+const cookieParser = require('cookie-parser');
+
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
   app.setGlobalPrefix('api');
-
+  app.use(cookieParser());
   const frontendUrl = process.env.FRONTEND_URL || 'https://tiktok-transcribe-frontend.vercel.app';
   const devUrl = 'http://localhost:3000';
   const subDomain = "https://useclipscript.com"

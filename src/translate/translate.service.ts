@@ -36,7 +36,7 @@ export class TranscriptionService {
         }
     }
 
-    async initiateTranscription(dto: CreateTranscriptionDto, ip: string, deviceId: string) {
+    async initiateTranscription(dto: CreateTranscriptionDto, ip: string, userId: string) {
         const { videoUrl } = dto;
         // Validate URL and platform
         const platform = this.detectPlatform(videoUrl);
@@ -67,11 +67,10 @@ export class TranscriptionService {
                 formatted,
                 platform,
                 ip,
-                deviceId
-
+                userId
             });
 
-            console.log('formatted', formatted)
+            console.log('Transcription initiated successfully for video', videoUrl);
 
             return { data: formatted };
         } catch (error) {
@@ -92,8 +91,8 @@ export class TranscriptionService {
         return null;
     }
 
-    async getRecentTranscribesPerUser(deviceId: string) {
-        const cacheKey = `user:${deviceId}`
+    async getRecentTranscribesPerUser(userId: string) {
+        const cacheKey = `user:${userId}`
 
         const cached = await this.cacheService.get(cacheKey);
 
@@ -101,7 +100,7 @@ export class TranscriptionService {
             console.log('cached user transcriptions');
             return cached;
         }
-        const userTranscripts = await this.transcriptionRepository.findByDeviceId(deviceId);
+        const userTranscripts = await this.transcriptionRepository.findByUserId(userId);
 
         this.eventEmitter.emit(TRANSCRIPTION_EVENTS.FETCHED, {
             cacheKey,
@@ -120,7 +119,7 @@ export class TranscriptionService {
         return this.transcriptionRepository.findByJobId(id);
     }
 
-    async renameTranscription(id: string, newName: string, deviceId: string) {
+    async renameTranscription(id: string, newName: string, userId: string) {
         const transcription = await this.transcriptionRepository.fetchByJobId(id);
 
         if (!transcription) {
@@ -132,7 +131,7 @@ export class TranscriptionService {
         await transcription.save();
 
         this.eventEmitter.emit(TRANSCRIPTION_EVENTS.UPDATED, {
-            deviceId
+            userId
         });
 
         return HttpStatus.OK;
