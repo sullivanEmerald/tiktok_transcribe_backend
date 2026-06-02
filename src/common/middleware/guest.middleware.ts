@@ -21,6 +21,8 @@ export class GuestMiddleware implements NestMiddleware {
 
         if (!guestId) {
             guestId = randomUUID();
+            console.log('NODE_ENV', process.env.NODE_ENV);
+            console.log('setting cookie', guestId);
             const guestUser = await this.usersService.createGuestUser(guestId);
             const isProd = process.env.NODE_ENV === 'production';
             res.cookie('guest_id', guestId, {
