@@ -72,6 +72,7 @@ export class TranscriptionController {
         if (!user.guestId) {
             throw new BadRequestException('Something went wrong. contact support');
         }
+        console.log('Fetching recent transcriptions for user with guest ID:', user.guestId);
         const result = await this.transcriptionService.getRecentTranscribesPerUser(user.guestId);
         return result;
     }
