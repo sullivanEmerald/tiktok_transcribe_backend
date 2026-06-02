@@ -26,4 +26,8 @@ export class TranscriptionRepository {
     async findByUserId(userId: string) {
         return this.transcriptionModel.find({ userId }).sort({ createdAt: -1 }).limit(10);
     }
+
+    async findByUserAndVideo(userId: string, videoUrl: string) {
+        return this.transcriptionModel.findOne({ userId, videoUrl });
+    }
 }

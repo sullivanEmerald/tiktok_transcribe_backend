@@ -8,6 +8,7 @@ import { formatSupadataTranscript } from 'src/common/utils/vtt-parser';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { ProgressGateway } from 'src/gateways/progress.gateway';
 import { TRANSCRIPTION_EVENTS } from './events/transscibe.types';
+import { from } from 'rxjs';
 
 
 @Injectable()
@@ -53,7 +54,65 @@ export class TranscriptionService {
 
         if (cached) {
             console.log('cached');
-            return { cached: true, data: cached };
+
+            const ownerId = cached?.ownerId;
+            const formatted = cached?.formatted;
+
+            if (ownerId === userId) {
+                return { cached: true, data: formatted };
+            }
+
+            const viewersKey = `${cacheKey}:viewers`;
+
+            const existingForUser = await this.transcriptionRepository.findByUserAndVideo(userId, normalizedUrl);
+
+            if (existingForUser) {
+                console.log('DB entry already exists for this user and video, ensuring viewers set is updated');
+                // ensure viewers set contains this user (best-effort)
+                try { await this.cacheService.sadd?.(viewersKey, userId); } catch (e) { /* non-fatal */ }
+
+                return { cached: true, data: formatted };
+            }
+
+            const added = await this.cacheService.sadd?.(viewersKey, userId);
+
+            if (added === 1) {
+                console.log('added to viewers set, creating DB entry');
+                const created = await this.transcriptionRepository.create({
+                    transcript: formatted.transcript,
+                    utterances: formatted.utterances,
+                    metadata: formatted.metadata,
+                    ip,
+                    videoUrl: normalizedUrl,
+                    userId,
+                });
+                this.eventEmitter.emit(TRANSCRIPTION_EVENTS.CREATED, {
+                    videoUrl: normalizedUrl,
+                    cacheKey,
+                    formatted,
+                    platform,
+                    ip,
+                    userId,
+                    jobId: created._id,
+                    fromCache: true,
+                });
+            } else {
+                // someone else likely created the DB row — re-check and emit to sync frontend
+                const maybe = await this.transcriptionRepository.findByUserAndVideo(userId, normalizedUrl);
+                this.eventEmitter.emit(TRANSCRIPTION_EVENTS.CREATED, {
+                    videoUrl: normalizedUrl,
+                    cacheKey,
+                    formatted,
+                    platform,
+                    ip,
+                    userId,
+                    jobId: maybe?._id,
+                    fromCache: true,
+                });
+            }
+
+
+            return { cached: true, data: formatted };
         }
 
         try {
@@ -62,7 +121,7 @@ export class TranscriptionService {
             const formatted = formatSupadataTranscript(platformData);
 
             this.eventEmitter.emit(TRANSCRIPTION_EVENTS.CREATED, {
-                videoUrl,
+                videoUrl: normalizedUrl,
                 cacheKey,
                 formatted,
                 platform,

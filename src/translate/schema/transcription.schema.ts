@@ -89,3 +89,6 @@ export class Transcription extends Document {
 }
 
 export const TranscriptionSchema = SchemaFactory.createForClass(Transcription);
+
+
+TranscriptionSchema.index({ userId: 1, videoUrl: 1 }, { unique: true });

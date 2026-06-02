@@ -28,6 +28,19 @@ export class CacheService {
         }
     }
 
+
+    async sadd(key: string, member: string): Promise<number> {
+        return this.redis.sadd(key, member);
+    }
+
+    async sismember(key: string, member: string): Promise<number> {
+        return this.redis.sismember(key, member);
+    }
+
+    async srem(key: string, member: string): Promise<number> {
+        return this.redis.srem(key, member);
+    }
+
     async del(key: string): Promise<void> {
         await this.redis.del(key);
     }

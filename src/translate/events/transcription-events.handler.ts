@@ -15,10 +15,18 @@ export class TranscriptionEventsHandler {
 
     @OnEvent(TRANSCRIPTION_EVENTS.CREATED)
     async handleTranscriptionCreated(event: any) {
-        const { videoUrl, cacheKey, formatted, platform, ip, userId } = event;
+        const { videoUrl, cacheKey, formatted, platform, ip, userId, fromCache } = event;
         try {
 
-            await this.transcriptionRepository.create({
+            if (fromCache) {
+                await Promise.all([
+                    this.cacheService.sadd?.(`${cacheKey}:viewers`, userId).catch(() => null),
+                    this.cacheService.del(`user:${userId}`).catch(() => null),
+                ]);
+                return;
+            }
+
+            const created = await this.transcriptionRepository.create({
                 transcript: formatted.transcript,
                 utterances: formatted.utterances,
                 metadata: formatted.metadata,
@@ -30,9 +38,10 @@ export class TranscriptionEventsHandler {
             await Promise.all([
                 this.cacheService.set(
                     cacheKey,
-                    formatted,
+                    { formatted, ownerId: userId, jobId: created._id || null },
                     60 * 60 * 24,
                 ),
+                this.cacheService.sadd?.(`${cacheKey}:viewers`, created.userId || userId).catch(() => null),
                 this.cacheService.del(`user:${userId}`),
             ]);
         } catch (err) {
