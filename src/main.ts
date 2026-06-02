@@ -9,6 +9,7 @@ const cookieParser = require('cookie-parser');
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
   app.setGlobalPrefix('api');
+  app.set('trust proxy', 1);
   app.use(cookieParser());
   const frontendUrl = process.env.FRONTEND_URL || 'https://tiktok-transcribe-frontend.vercel.app';
   const devUrl = 'http://localhost:3000';

@@ -26,6 +26,7 @@ export class TranscriptionController {
     @Post()
     async createTranscription(@Body() dto: CreateTranscriptionDto, @CurrentUser() user: any, @Req() req: Request) {
 
+        console.log('user making request:', user?.guestid);
         let ip = getClientIp(req);
 
         if (!user.guestId) {
