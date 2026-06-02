@@ -15,6 +15,9 @@ export class GuestMiddleware implements NestMiddleware {
         res: Response,
         next: () => void,
     ) {
+
+        console.log('cookie header', req.headers.cookie);
+        console.log('cookies', req.cookies);
         let guestId = req.cookies?.guest_id;
 
         console.log('GuestMiddleware - incoming request with guest_id:', guestId);
@@ -27,8 +30,8 @@ export class GuestMiddleware implements NestMiddleware {
             const isProd = process.env.NODE_ENV === 'production';
             res.cookie('guest_id', guestId, {
                 httpOnly: true,
-                secure: isProd,
-                sameSite: isProd ? 'none' : 'lax',
+                secure: true,
+                sameSite: 'none',
                 maxAge: 1000 * 60 * 60 * 24 * 365,
                 path: '/',
 
