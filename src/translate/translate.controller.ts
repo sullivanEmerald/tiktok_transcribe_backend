@@ -74,6 +74,7 @@ export class TranscriptionController {
         }
         console.log('Fetching recent transcriptions for user with guest ID:', user.guestId);
         const result = await this.transcriptionService.getRecentTranscribesPerUser(user.guestId);
+        console.log('Fetched recent transcriptions for user with guest ID:', user.guestId, 'Result count:', result.length);
         return result;
     }
 
