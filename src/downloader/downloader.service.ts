@@ -7,6 +7,9 @@ import axios from 'axios';
 import { ConfigService } from '@nestjs/config';
 import type { Response } from 'express';
 import { BadRequestException } from '@nestjs/common';
+import { DownloadRepository } from './download.repository';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { DOWNLOADER_EVENTS } from './events/downloader-events.type';
 
 type VideoPlatform = 'tiktok' | 'instagram' | 'youtube' | 'unknown';
 
@@ -15,6 +18,8 @@ export class DownloaderService {
   constructor(
     private readonly redisService: RedisService,
     private readonly configService: ConfigService,
+    private readonly downloadRepository: DownloadRepository,
+    private readonly eventEmitter: EventEmitter2,
   ) { }
 
 
@@ -43,12 +48,7 @@ export class DownloaderService {
       throw new Error(data?.error || 'FastSaver returned a failed response');
     }
 
-    return {
-      download_url: data.download_url as string,
-      title: (data.title as string) || 'video',
-      thumbnail: data.thumbnail_url || null,
-      caption: data.caption || '',
-    };
+    return data;
   }
 
   private async fetchYoutubeMeta(videoUrl: string, format = '720p') {
@@ -65,12 +65,7 @@ export class DownloaderService {
       throw new Error(data?.error || 'FastSaver YouTube fetch failed');
     }
 
-    return {
-      download_url: data.download_url as string,
-      title: (data.title as string) || 'video',
-      thumbnail: data.thumbnail_url || null,
-      caption: '',
-    };
+    return data;
   }
 
 
@@ -93,11 +88,8 @@ export class DownloaderService {
     }
   }
 
-  async streamVideoToClient(dto: CreateTranscriptionDto, res: Response) {
+  async streamVideoToClient(dto: CreateTranscriptionDto, res: Response, guestId?: string, ip?: string) {
     const meta = await this.getVideoMeta(dto);
-
-    console.log(meta.download_url);
-
 
     // Fetch the actual video as a stream — do NOT buffer it all in memory
     const videoStream = await axios.get<NodeJS.ReadableStream>(meta.download_url, {
@@ -111,7 +103,7 @@ export class DownloaderService {
     const contentLength = videoStream.headers['content-length'];
 
     // Sanitize filename — remove characters that break Content-Disposition
-    const safeTitle = meta.title.replace(/[^a-zA-Z0-9_\- ]/g, '_').trim();
+    const safeTitle = 'ClipScript'.replace(/[^a-zA-Z0-9_\- ]/g, '_').trim();
 
     // These headers are what force "Save As" on the browser
     res.setHeader('Content-Disposition', `attachment; filename="${safeTitle}.mp4"`);
@@ -121,6 +113,19 @@ export class DownloaderService {
     if (contentLength) {
       res.setHeader('Content-Length', contentLength);
     }
+
+    // Persist download record (best-effort) before piping
+    this.eventEmitter.emit(DOWNLOADER_EVENTS.DOWNLOAD_CREATED, {
+      guestId: guestId,
+      videoUrl: dto.videoUrl,
+      title: meta.title,
+      downloadUrl: meta.download_url,
+      thumbnail: meta.thumbnail_url,
+      caption: meta.caption,
+      source: meta.source,
+      duration: meta.duration,
+      ip
+    });
 
     // Pipe the upstream response directly to the client response
     // This never loads the full video into memory
@@ -135,5 +140,10 @@ export class DownloaderService {
         res.destroy(); // headers already sent, just kill the connection
       }
     });
+  }
+
+
+  async getDownloadsByGuestId(guestId: string) {
+    return this.downloadRepository.findByGuestId(guestId);
   }
 }

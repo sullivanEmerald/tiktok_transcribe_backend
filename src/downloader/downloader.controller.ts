@@ -7,6 +7,7 @@ import type { Response, Request } from 'express';
 import { Res, Req } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { getClientIp } from 'src/utils/getClientIp';
+import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 
 @Controller('downloader')
 export class DownloaderController {
@@ -20,7 +21,8 @@ export class DownloaderController {
     ) { }
 
     @Post('/download')
-    async downloadVideo(@Body() dto: CreateTranscriptionDto, @Req() req: Request, @Res() res: Response) {
+    async downloadVideo(@Body() dto: CreateTranscriptionDto, @Req() req: Request, @Res() res: Response, @CurrentUser() user: any) {
+        console.log('Download request received:', { guestId: user?.guestId });
         let ip = getClientIp(req)
 
         // Abuse protection check
@@ -37,7 +39,7 @@ export class DownloaderController {
             this.eventEmitter.emit('abuseProtection.reset', { ip });
         }
         try {
-            await this.downloaderService.streamVideoToClient(dto, res);
+            await this.downloaderService.streamVideoToClient(dto, res, user?.guestId, ip);
         } catch (error) {
             console.error('Download failed:', error.message);
 
