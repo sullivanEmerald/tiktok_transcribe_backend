@@ -1,3 +1,5 @@
+import { Utterance } from 'src/common/interfaces/utterance.interface';
+
 export interface TranscriptData {
     transcript: string;
     metadata: {
@@ -19,11 +21,7 @@ export interface TranscriptData {
             shares: number;
         };
     };
-    utterances?: Array<{
-        text: string;
-        start: number;
-        end: number;
-    }>;
+    utterances?: Utterance[];
 
 }
 
@@ -36,7 +34,7 @@ export function formatSupadataTranscript(platformData: any): TranscriptData {
         .trim();
 
     // Map utterances to required format
-    const utterances = (platformData.transcript || []).map((u: any) => ({
+    const utterances: Utterance[] = (platformData.transcript || []).map((u: any) => ({
         text: u.text,
         start: u.offset,
         end: u.offset + (u.duration || 0),

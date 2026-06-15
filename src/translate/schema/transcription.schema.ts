@@ -1,11 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
-
-export type Utterance = {
-    text: string;
-    start: number;
-    end: number;
-};
+import { Utterance } from 'src/common/interfaces/utterance.interface';
 
 export type Author = {
     username: string;

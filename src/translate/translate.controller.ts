@@ -12,6 +12,7 @@ import { SupadataService } from 'src/common/supadata.service';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { getClientIp } from 'src/utils/getClientIp';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
+import { Utterance } from 'src/common/interfaces/utterance.interface';
 
 @Controller('transcription')
 export class TranscriptionController {
@@ -123,4 +124,14 @@ export class TranscriptionController {
         const stream = createReadStream(videoPath);
         stream.pipe(res);
     }
+
+    @Post('improve')
+    async improveTranscription(@Body() dto: { utterances: Utterance[] }, @CurrentUser() user: any) {
+        if (!user.guestId) {
+            throw new BadRequestException('Something went wrong. contact support');
+        }
+        console.log('Improving transcription for user with guest ID:', user.guestId);
+        return this.transcriptionService.improveTranscription(dto.utterances, user.guestId);
+    }
+
 }

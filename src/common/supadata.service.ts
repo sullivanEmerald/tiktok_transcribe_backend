@@ -1,5 +1,6 @@
 import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { Supadata } from '@supadata/js';
+import { TRANSCRIPTION_PROMPTS } from 'src/translate/events/transscibe.types';
 
 @Injectable()
 export class SupadataService {
@@ -40,8 +41,6 @@ export class SupadataService {
 
                 this.fetchMetadata(videoUrl),
             ]);
-
-            console.log('Supadata transcript result:', transcriptResult);
 
             if ('jobId' in transcriptResult) {
                 const startTime = Date.now();
@@ -90,6 +89,89 @@ export class SupadataService {
             return {
                 transcript: transcriptResult.content,
                 metadata,
+            };
+        } catch (error) {
+            console.error('Supadata error:', error);
+
+            if (error instanceof HttpException) {
+                throw error;
+            }
+
+            const errMsg = error?.message || '';
+
+            if (
+                errMsg.includes('not-found') ||
+                errMsg.includes('private')
+            ) {
+                throw new HttpException(
+                    'No data available for this video. It may be private, removed, or restricted.',
+                    HttpStatus.BAD_REQUEST,
+                );
+            }
+
+            throw new HttpException(
+                error?.details ? 'No data available for this video. It may be private, removed, or restricted.' : 'Internal server error',
+                HttpStatus.INTERNAL_SERVER_ERROR,
+            );
+        }
+    }
+
+    async summarizeTranscription(videoUrl: string) {
+        try {
+            const summary = await this.supadata.extract({
+                url: videoUrl,
+                prompt: TRANSCRIPTION_PROMPTS.SUMMARY,
+                schema: TRANSCRIPTION_PROMPTS.SCHEMA,
+            });
+            if ('jobId' in summary) {
+                const startTime = Date.now();
+                const maxWait = 60000;
+                const pollInterval = 800;
+
+                while (Date.now() - startTime < maxWait) {
+                    await new Promise((res) => setTimeout(res, pollInterval));
+                    const job = await this.supadata.extract.getResults(summary.jobId);
+
+                    if (job.status === 'completed') {
+                        console.log(job, { depth: null });
+
+                        return;
+                        // return {
+                        //     transcript: job?.result?.content,
+                        //     metadata,
+                        // };
+                    }
+
+                    if (job.status === 'failed') {
+                        const errorCode = job.error?.error;
+                        const errorMessage = job.error?.message || '';
+
+                        if (
+                            errorCode === 'not-found' ||
+                            errorMessage.toLowerCase().includes('private') ||
+                            errorMessage.toLowerCase().includes('restricted')
+                        ) {
+                            throw new HttpException(
+                                'No data available for this video. It may be private, removed, or restricted.',
+                                HttpStatus.BAD_REQUEST,
+                            );
+                        }
+
+                        throw new HttpException(
+                            `Transcription failed: ${errorMessage}`,
+                            HttpStatus.INTERNAL_SERVER_ERROR,
+                        );
+                    }
+                }
+
+                throw new HttpException(
+                    'The Transcription timed out',
+                    HttpStatus.REQUEST_TIMEOUT,
+                );
+            }
+
+            return {
+                summary: "great video",
             };
         } catch (error) {
             console.error('Supadata error:', error);

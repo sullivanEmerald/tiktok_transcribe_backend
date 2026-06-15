@@ -1,5 +1,5 @@
 export interface TranscriptResult {
     transcript: string;
-    utterances: { text: string }[];
+    utterances: import('./utterance.interface').Utterance[];
     source: 'captions' | 'assemblyai';
 }

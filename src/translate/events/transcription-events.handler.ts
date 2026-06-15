@@ -38,7 +38,7 @@ export class TranscriptionEventsHandler {
             await Promise.all([
                 this.cacheService.set(
                     cacheKey,
-                    { formatted, ownerId: userId, jobId: created._id || null },
+                    { formatted, videoUrl, ownerId: userId, jobId: created._id || null },
                     60 * 60 * 24,
                 ),
                 this.cacheService.sadd?.(`${cacheKey}:viewers`, created.userId || userId).catch(() => null),
@@ -66,6 +66,18 @@ export class TranscriptionEventsHandler {
         const { userId } = event;
         try {
             await this.cacheService.del(`user:${userId}`);
+        } catch (error) {
+            this.logger.error(error)
+            throw error;
+        }
+    }
+
+    @OnEvent(TRANSCRIPTION_EVENTS.EXTRACTED)
+    async handleTranscriptionExtracted(event: any) {
+        const { summary, userId, cachedKey } = event;
+        try {
+            await this.cacheService.set(cachedKey, summary, 60 * 60 * 24);
+            // await this.cacheService.del(`user:${userId}`);
         } catch (error) {
             this.logger.error(error)
             throw error;

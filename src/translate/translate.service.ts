@@ -9,6 +9,8 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 import { ProgressGateway } from 'src/gateways/progress.gateway';
 import { TRANSCRIPTION_EVENTS } from './events/transscibe.types';
 import { from } from 'rxjs';
+import { Utterance } from 'src/common/interfaces/utterance.interface';
+import { ClaudeService } from 'src/common/claudeService';
 
 
 @Injectable()
@@ -18,11 +20,10 @@ export class TranscriptionService {
         private readonly cacheService: CacheService,
         private readonly supadataService: SupadataService,
         private readonly eventEmitter: EventEmitter2,
+        private readonly claudeService: ClaudeService,
     ) {
 
     }
-
-
     private normalizeVideoUrl(url: string) {
         try {
             const parsed = new URL(url);
@@ -58,8 +59,10 @@ export class TranscriptionService {
             const ownerId = cached?.ownerId;
             const formatted = cached?.formatted;
 
+            console.log(cached);
+
             if (ownerId === userId) {
-                return { cached: true, data: formatted };
+                return { cached: true, data: { ...formatted, videoUrl: cached.videoUrl } };
             }
 
             const viewersKey = `${cacheKey}:viewers`;
@@ -146,6 +149,7 @@ export class TranscriptionService {
     private detectPlatform(url: string): string | null {
         if (url.includes('tiktok.com')) return 'tiktok';
         if (url.includes('instagram.com')) return 'instagram';
+        if (url.includes('facebook.com')) return 'facebook';
         if (url.includes('youtube.com/shorts') || url.includes('youtu.be')) return 'youtube';
         return null;
     }
@@ -194,6 +198,36 @@ export class TranscriptionService {
         });
 
         return HttpStatus.OK;
+    }
+
+    private cacheSummary(utterances: Utterance[]) {
+        return `improved:${JSON.stringify(utterances)}`;
+    }
+
+    async improveTranscription(utterances: Utterance[], userId: string) {
+        const cachedKey = this.cacheSummary(utterances);
+
+        const cached = await this.cacheService.get(cachedKey);
+        if (cached) {
+            console.log('cached summary');
+            return cached;
+        }
+
+        // Call to external service for summarization
+        const improvedTranscript = await this.claudeService.improveTranscription(utterances);
+
+        this.eventEmitter.emit(TRANSCRIPTION_EVENTS.EXTRACTED, {
+            utterances,
+            // summary,
+            userId,
+            cachedKey
+        });
+
+        return {
+            utterances,
+            improvedTranscript
+            // summary
+        };
     }
 
 }
