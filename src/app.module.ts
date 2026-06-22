@@ -11,6 +11,8 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
 import { APP_GUARD } from '@nestjs/core';
 import { UsersModule } from './users/users.module';
 import { GuestMiddleware } from './common/middleware/guest.middleware';
+import { ClipsController } from './clips/clips.controller';
+import { ClipsModule } from './clips/clips.module';
 
 
 @Module({
@@ -30,8 +32,9 @@ import { GuestMiddleware } from './common/middleware/guest.middleware';
     TranslateModule,
     DownloaderModule,
     UsersModule,
+    ClipsModule,
   ],
-  controllers: [AppController],
+  controllers: [AppController, ClipsController],
   providers: [
     AppService,
     CacheService,

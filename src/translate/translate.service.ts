@@ -74,7 +74,7 @@ export class TranscriptionService {
                 // ensure viewers set contains this user (best-effort)
                 try { await this.cacheService.sadd?.(viewersKey, userId); } catch (e) { /* non-fatal */ }
 
-                return { cached: true, data: formatted };
+                return { cached: true, data: { ...formatted, videoUrl: normalizedUrl } };
             }
 
             const added = await this.cacheService.sadd?.(viewersKey, userId);
@@ -115,13 +115,15 @@ export class TranscriptionService {
             }
 
 
-            return { cached: true, data: formatted };
+            return { cached: true, data: { ...formatted, videoUrl: normalizedUrl } };
         }
 
         try {
             const platformData = await this.supadataService.fetchTranscriptWithMetaData(videoUrl);
 
             const formatted = formatSupadataTranscript(platformData);
+
+            console.log("formatted", formatted)
 
             this.eventEmitter.emit(TRANSCRIPTION_EVENTS.CREATED, {
                 videoUrl: normalizedUrl,
@@ -134,7 +136,7 @@ export class TranscriptionService {
 
             console.log('Transcription initiated successfully for video', videoUrl);
 
-            return { data: formatted };
+            return { data: { ...formatted, videoUrl: normalizedUrl } };
         } catch (error) {
             console.error('Error initiating transcription:', error);
             const errorMessage =
