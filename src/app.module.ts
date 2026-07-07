@@ -13,6 +13,8 @@ import { UsersModule } from './users/users.module';
 import { GuestMiddleware } from './common/middleware/guest.middleware';
 import { ClipsController } from './clips/clips.controller';
 import { ClipsModule } from './clips/clips.module';
+import { AuthModule } from './auth/auth.module';
+import { MailModule } from './mail/mail.module';
 
 
 @Module({
@@ -33,6 +35,8 @@ import { ClipsModule } from './clips/clips.module';
     DownloaderModule,
     UsersModule,
     ClipsModule,
+    AuthModule,
+    MailModule,
   ],
   controllers: [AppController, ClipsController],
   providers: [
@@ -47,8 +51,4 @@ import { ClipsModule } from './clips/clips.module';
   ],
   exports: [CacheService],
 })
-export class AppModule implements NestModule {
-  configure(consumer: MiddlewareConsumer) {
-    consumer.apply(GuestMiddleware).forRoutes('*');
-  }
-}
+export class AppModule { }

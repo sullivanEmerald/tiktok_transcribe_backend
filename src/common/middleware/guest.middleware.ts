@@ -25,7 +25,7 @@ export class GuestMiddleware implements NestMiddleware {
         if (!guestId) {
             guestId = randomUUID();
             console.log('NODE_ENV', process.env.NODE_ENV);
-            const guestUser = await this.usersService.createGuestUser(guestId);
+            // const guestUser = await this.usersService.createGuestUser(guestId);
             const isProd = process.env.NODE_ENV === 'production';
             res.cookie('guest_id', guestId, {
                 httpOnly: true,
@@ -35,14 +35,14 @@ export class GuestMiddleware implements NestMiddleware {
                 path: '/',
 
             });
-            req.user = guestUser;
+            // req.user = guestUser;
             return next();
         }
 
         const existingUser = await this.usersService.findByGuestId(guestId);
         if (!existingUser) {
-            const guestUser = await this.usersService.createGuestUser(guestId);
-            req.user = guestUser;
+            // const guestUser = await this.usersService.createGuestUser(guestId);
+            // req.user = guestUser;
             return next();
         }
 

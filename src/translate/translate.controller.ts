@@ -54,6 +54,7 @@ export class TranscriptionController {
 
             const valid = await this.recaptchaService.verify(dto.captchaToken);
 
+
             if (!valid) {
                 throw new BadRequestException({
                     requireCaptcha: true,
@@ -69,16 +70,16 @@ export class TranscriptionController {
     }
 
 
-    @Get('/recent')
-    async getRecentTranscribesPerUser(@Req() req: Request, @CurrentUser() user: any) {
-        if (!user.guestId) {
-            throw new BadRequestException('Something went wrong. contact support');
-        }
-        console.log('Fetching recent transcriptions for user with guest ID:', user.guestId);
-        const result = await this.transcriptionService.getRecentTranscribesPerUser(user.guestId);
-        console.log('Fetched recent transcriptions for user with guest ID:', user.guestId, 'Result count:', result.length);
-        return result;
-    }
+    // @Get('/recent')
+    // async getRecentTranscribesPerUser(@Req() req: Request, @CurrentUser() user: any) {
+    //     if (!user.guestId) {
+    //         throw new BadRequestException('Something went wrong. contact support');
+    //     }
+    //     console.log('Fetching recent transcriptions for user with guest ID:', user.guestId);
+    //     const result = await this.transcriptionService.getRecentTranscribesPerUser(user.guestId);
+    //     console.log('Fetched recent transcriptions for user with guest ID:', user.guestId, 'Result count:', result.length);
+    //     return result;
+    // }
 
     @Get(':id')
     async getTranscription(@Param('id') id: string) {
