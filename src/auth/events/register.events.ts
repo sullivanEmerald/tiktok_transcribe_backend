@@ -26,4 +26,15 @@ export class AuthEventsHandler {
         }
     }
 
+    @OnEvent(REGISTER_EVENTS.PASSWORD_RESET_REQUESTED)
+    async handlePasswordRequestCreated(event: any) {
+        const { email, otp } = event;
+        try {
+            await this.mailService.sendOtpVerification(email, otp);
+        } catch (err) {
+            this.logger.error(err);
+            throw err;
+        }
+    }
+
 }

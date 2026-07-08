@@ -62,4 +62,20 @@ export class AuthController {
         res.clearCookie('refreshToken', { path: '/api/auth/refresh' });
         return { ok: true };
     }
+
+    @Post('forgot-password')
+    async forgotPassword(@Body() dto: { email: string }) {
+        return this.authService.forgotpassword(dto.email);
+    }
+
+    @Post('verify-reset-otp')
+    async VerifyResetPassword(@Body() dto: { email: string, otp: string }) {
+        return this.authService.verifyResetOtp(dto.email, dto.otp);
+    }
+
+
+    @Post('reset-password')
+    async ResetPassword(@Body() dto: { resetTicket: string, newPassword: string }) {
+        return this.authService.resetPassword(dto.resetTicket, dto.newPassword);
+    }
 }

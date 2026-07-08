@@ -32,6 +32,10 @@ export class AuthService {
         return crypto.randomBytes(32).toString('hex');
     }
 
+    private generateOtp(): string {
+        return crypto.randomInt(100000, 1000000).toString();
+    }
+
 
     async register(registerDto: RegisterDto) {
         const { email, password, ...rest } = registerDto;
@@ -105,6 +109,72 @@ export class AuthService {
         return { message: 'Verification email resent. Please check your inbox.' };
     }
 
+    async forgotpassword(email: string) {
+        const user = await this.usersService.findByEmail({ email })
+        if (!user) {
+            throw new BadRequestException('If that email is registered, an OTP has been sent.')
+        }
+
+        const otp = this.generateOtp();
+        const otpHash = await bcrypt.hash(otp, 10);
+        // use 10 * 60 for ten minutes later
+        const ttlSeconds = 24 * 60 * 60;
+
+        await this.cacheService.set(`password_reset:${email}`, { otpHash, attempts: 0 }, ttlSeconds);
+
+        this.emitter.emit(REGISTER_EVENTS.PASSWORD_RESET_REQUESTED, { email, otp });
+
+        return { message: 'If that email is registered, an OTP has been sent.' };
+
+    }
+
+
+    async verifyResetOtp(email: string, otp: string) {
+        const cacheKey = `password_reset:${email}`;
+        const cached = await this.cacheService.get(cacheKey);
+
+        if (!cached) {
+            throw new BadRequestException('Invalid or expired OTP');
+        }
+
+        if (cached.attempts >= 5) {
+            await this.cacheService.del(cacheKey);
+            throw new BadRequestException('Too many attempts. Please request a new OTP.');
+        }
+
+        const isValid = await bcrypt.compare(otp, cached.otpHash);
+        if (!isValid) {
+            await this.cacheService.set(cacheKey, { ...cached, attempts: cached.attempts + 1 }, 24 * 60 * 60);
+            throw new BadRequestException('Invalid or expired OTP');
+        }
+
+        const resetTicket = crypto.randomBytes(32).toString('hex');
+        await this.cacheService.set(`reset_ticket:${resetTicket}`, { email }, 24 * 60 * 60);
+        await this.cacheService.del(cacheKey);
+
+        return { resetTicket };
+    }
+
+    async resetPassword(resetTicket: string, newPassword: string) {
+        const cacheKey = `reset_ticket:${resetTicket}`;
+        const cached = await this.cacheService.get(cacheKey);
+
+        if (!cached) {
+            throw new BadRequestException('Invalid or expired reset session. Please request a new OTP.');
+        }
+
+        const { email } = cached;
+        const user = await this.usersService.findByEmail({ email });
+        if (!user) {
+            throw new BadRequestException('Invalid or expired reset session.');
+        }
+
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+        await this.usersService.updatePassword(user._id.toString(), hashedPassword);
+        await this.cacheService.del(cacheKey);
+
+        return { message: 'Password reset successful. Please log in.' };
+    }
 
     async issueTokens(user) {
         const accessToken = this.jwtService.sign(

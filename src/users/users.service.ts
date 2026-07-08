@@ -1,4 +1,4 @@
-import { HttpStatus, Injectable } from '@nestjs/common';
+import { HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { User, UserDocument, UserType } from './schema/user.schema';
@@ -50,6 +50,20 @@ export class UsersService {
     //     this.emitter.emit(USER_EVENTS.CREATED, { cacheKey: this.userCachedKey(guestId), user: newUser });
     //     return newUser;
     // }
+
+    async updatePassword(userId: string, hashedPassword: string) {
+        const user = await this.userModel.findByIdAndUpdate(
+            userId,
+            { password: hashedPassword },
+            { new: true },
+        );
+
+        if (!user) {
+            throw new NotFoundException('User not found');
+        }
+
+        return user;
+    }
 
     async findByGuestId(guestId: string) {
         const cacheKey = this.userCachedKey(guestId);

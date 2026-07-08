@@ -3,6 +3,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Resend } from 'resend';
 import { render } from '@react-email/render';
 import VerifyEmail from './templates/verify-email';
+import ResetPasswordOtp from './templates/reset-passport-otp';
 
 @Injectable()
 export class MailService {
@@ -28,5 +29,19 @@ export class MailService {
             throw error;
         }
 
+    }
+
+    async sendOtpVerification(to: string, otp: string) {
+        try {
+            await this.resend.emails.send({
+                from: process.env.MAIL_FROM || 'info@useclipscript.com',
+                to: to,
+                subject: 'Your password reset code',
+                react: <ResetPasswordOtp otp={otp} />,
+            });
+        } catch (error) {
+            this.logger.error(`Failed to send OTP email to ${to}: ${error.message}`);
+            throw error;
+        }
     }
 }
