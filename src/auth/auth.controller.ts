@@ -51,4 +51,15 @@ export class AuthController {
     async getProfile(@CurrentUser() userId: string) {
         return this.authService.getProfile(userId)
     }
+
+    @Post('logout')
+    async logout(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
+        const refreshToken = req.cookies['refreshToken'];
+        if (refreshToken) {
+            await this.authService.revokeRefreshToken(refreshToken);
+        }
+        res.clearCookie('accessToken');
+        res.clearCookie('refreshToken', { path: '/api/auth/refresh' });
+        return { ok: true };
+    }
 }

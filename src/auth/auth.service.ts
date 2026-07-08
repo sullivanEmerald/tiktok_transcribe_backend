@@ -155,7 +155,7 @@ export class AuthService {
             httpOnly: true,
             secure: isProd,
             sameSite: isProd ? 'none' : 'lax',
-            path: '/auth/refresh',
+            path: '/api/auth/refresh',
             maxAge: 7 * 24 * 60 * 60 * 1000,
         });
     }
@@ -191,6 +191,15 @@ export class AuthService {
             id: user._id,
             firstName: user.firstName,
             email: user.email
+        }
+    }
+
+    async revokeRefreshToken(rawToken: string) {
+        const candidates = await this.refreshTokenModel.find({ revoked: false });
+        const match = await this.findMatchingToken(candidates, rawToken);
+        if (match) {
+            match.revoked = true;
+            await match.save();
         }
     }
 
