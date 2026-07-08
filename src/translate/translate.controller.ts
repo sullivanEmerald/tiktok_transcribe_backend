@@ -1,5 +1,5 @@
 // transcription.controller.ts
-import { Controller, Post, Body, Get, Param, UseGuards, BadRequestException, Headers, Put } from '@nestjs/common';
+import { Controller, Post, Body, Get, Param, UseGuards, BadRequestException, Headers, Put, UnauthorizedException } from '@nestjs/common';
 import { TranscriptionService } from './translate.service';
 import { CreateTranscriptionDto } from './dto/create-translate.dto';
 import type { Response, Request } from 'express';
@@ -13,7 +13,10 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 import { getClientIp } from 'src/utils/getClientIp';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import { Utterance } from 'src/common/interfaces/utterance.interface';
+import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
+import { Public } from 'src/common/decorators/public.decorator';
 
+@UseGuards(JwtAuthGuard)
 @Controller('transcription')
 export class TranscriptionController {
     constructor(
@@ -24,14 +27,13 @@ export class TranscriptionController {
         private readonly eventEmitter: EventEmitter2,
     ) { }
 
+    // @Public()
     @Post()
-    async createTranscription(@Body() dto: CreateTranscriptionDto, @CurrentUser() user: any, @Req() req: Request) {
-
-        console.log('user making request:', user?.guestid);
+    async createTranscription(@Body() dto: CreateTranscriptionDto, @CurrentUser() userId: string, @Req() req: Request) {
         let ip = getClientIp(req);
 
-        if (!user.guestId) {
-            throw new BadRequestException('Something went wrong. contact support');
+        if(!userId){
+            throw new UnauthorizedException('Somwthing went wrong, contact support')
         }
 
         // Abuse protection check
@@ -65,21 +67,21 @@ export class TranscriptionController {
             await this.abuseProtection.reset(ip);
         }
 
-        return this.transcriptionService.initiateTranscription(dto, ip, user.guestId);
+        return this.transcriptionService.initiateTranscription(dto, ip, userId);
 
     }
 
 
-    // @Get('/recent')
-    // async getRecentTranscribesPerUser(@Req() req: Request, @CurrentUser() user: any) {
-    //     if (!user.guestId) {
-    //         throw new BadRequestException('Something went wrong. contact support');
-    //     }
-    //     console.log('Fetching recent transcriptions for user with guest ID:', user.guestId);
-    //     const result = await this.transcriptionService.getRecentTranscribesPerUser(user.guestId);
-    //     console.log('Fetched recent transcriptions for user with guest ID:', user.guestId, 'Result count:', result.length);
-    //     return result;
-    // }
+    @Get('/recent')
+    async getRecentTranscribesPerUser(@Req() req: Request, @CurrentUser() userId: any) {
+        if (!userId) {
+            throw new BadRequestException('Something went wrong. contact support');
+        }
+        console.log('Fetching recent transcriptions for user with guest ID:', userId);
+        const result = await this.transcriptionService.getRecentTranscribesPerUser(userId);
+        console.log('Fetched recent transcriptions for user with guest ID:', userId, 'Result count:', result.length);
+        return result;
+    }
 
     @Get(':id')
     async getTranscription(@Param('id') id: string) {

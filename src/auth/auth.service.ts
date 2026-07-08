@@ -143,6 +143,7 @@ export class AuthService {
 
 
     setAuthCookies(res: Response, accessToken: string, refreshToken: string) {
+        console.log("refreshToken", refreshToken)
         const isProd = process.env.NODE_ENV === 'production';
         res.cookie('accessToken', accessToken, {
             httpOnly: true,

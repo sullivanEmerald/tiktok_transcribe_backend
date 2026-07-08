@@ -1,5 +1,5 @@
 // downloader.service.ts
-import { Injectable } from '@nestjs/common';
+import { Injectable, UseGuards } from '@nestjs/common';
 import type { Queue } from 'bull';
 import { CreateTranscriptionDto } from '../translate/dto/create-translate.dto';
 import { RedisService } from 'src/common/redis.service';
@@ -10,6 +10,7 @@ import { BadRequestException } from '@nestjs/common';
 import { DownloadRepository } from './download.repository';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { DOWNLOADER_EVENTS } from './events/downloader-events.type';
+import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 
 type VideoPlatform = 'tiktok' | 'instagram' | 'youtube' | 'unknown';
 
@@ -88,7 +89,7 @@ export class DownloaderService {
     }
   }
 
-  async streamVideoToClient(dto: CreateTranscriptionDto, res: Response, guestId?: string, ip?: string) {
+  async streamVideoToClient(dto: CreateTranscriptionDto, res: Response, userId?: string, ip?: string) {
     const meta = await this.getVideoMeta(dto);
 
     // Fetch the actual video as a stream — do NOT buffer it all in memory
@@ -116,7 +117,7 @@ export class DownloaderService {
 
     // Persist download record (best-effort) before piping
     this.eventEmitter.emit(DOWNLOADER_EVENTS.DOWNLOAD_CREATED, {
-      guestId: guestId,
+      userId: userId,
       videoUrl: dto.videoUrl,
       title: meta.title,
       downloadUrl: meta.download_url,
@@ -143,7 +144,7 @@ export class DownloaderService {
   }
 
 
-  async getDownloadsByGuestId(guestId: string) {
-    return this.downloadRepository.findByGuestId(guestId);
+  async getDownloadsByGuestId(userId: string) {
+    return this.downloadRepository.findByGuestId(userId);
   }
 }

@@ -68,12 +68,12 @@ export class UsersService {
         return user;
     }
 
-    async getProfile(guestId: string) {
+    async getProfile(userId: string) {
         const [downloads, transcriptions] = await Promise.all([
-            this.downloaderService.getDownloadsByGuestId(guestId),
-            this.transcriptionService.getRecentTranscribesPerUser(guestId)
+            this.downloaderService.getDownloadsByGuestId(userId),
+            this.transcriptionService.getRecentTranscribesPerUser(userId)
         ]);
-        console.log('Profile data fetched for guestId:', guestId, { downloadsCount: downloads.length, transcriptionsCount: transcriptions.length });
+        console.log('Profile data fetched for guestId:', userId, { downloadsCount: downloads.length, transcriptionsCount: transcriptions.length });
 
         const total = downloads.length + transcriptions.length;
         // Return percentages (0-100) with two decimals

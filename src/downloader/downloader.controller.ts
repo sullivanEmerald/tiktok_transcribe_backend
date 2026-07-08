@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Logger, BadRequestException, Get, Param, HttpException, HttpStatus } from '@nestjs/common';
+import { Controller, Post, Body, Logger, BadRequestException, UseGuards, Get, Param, HttpException, HttpStatus } from '@nestjs/common';
 import { DownloaderService } from './downloader.service';
 import { RecaptchaService } from 'src/common/recaptcha.service';
 import { CreateTranscriptionDto } from '../translate/dto/create-translate.dto';
@@ -8,7 +8,9 @@ import { Res, Req } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { getClientIp } from 'src/utils/getClientIp';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
+import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 
+@UseGuards(JwtAuthGuard)
 @Controller('downloader')
 export class DownloaderController {
     private readonly logger = new Logger(DownloaderController.name);
@@ -21,8 +23,7 @@ export class DownloaderController {
     ) { }
 
     @Post('/download')
-    async downloadVideo(@Body() dto: CreateTranscriptionDto, @Req() req: Request, @Res() res: Response, @CurrentUser() user: any) {
-        console.log('Download request received:', { guestId: user?.guestId });
+    async downloadVideo(@Body() dto: CreateTranscriptionDto, @Req() req: Request, @Res() res: Response, @CurrentUser() userId: string) {
         let ip = getClientIp(req)
 
         // Abuse protection check
@@ -39,7 +40,7 @@ export class DownloaderController {
             this.eventEmitter.emit('abuseProtection.reset', { ip });
         }
         try {
-            await this.downloaderService.streamVideoToClient(dto, res, user?.guestId, ip);
+            await this.downloaderService.streamVideoToClient(dto, res, userId, ip);
         } catch (error) {
             console.error('Download failed:', error.message);
 

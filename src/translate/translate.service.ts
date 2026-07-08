@@ -59,60 +59,59 @@ export class TranscriptionService {
             const ownerId = cached?.ownerId;
             const formatted = cached?.formatted;
 
-            console.log(cached);
+                if (ownerId === userId) {
+                    return { cached: true, data: { ...formatted, videoUrl: cached.videoUrl } };
+                }
 
-            if (ownerId === userId) {
-                return { cached: true, data: { ...formatted, videoUrl: cached.videoUrl } };
-            }
+                const viewersKey = `${cacheKey}:viewers`;
 
-            const viewersKey = `${cacheKey}:viewers`;
+                const existingForUser = await this.transcriptionRepository.findByUserAndVideo(userId, normalizedUrl);
 
-            const existingForUser = await this.transcriptionRepository.findByUserAndVideo(userId, normalizedUrl);
+                if (existingForUser) {
+                    console.log('DB entry already exists for this user and video, ensuring viewers set is updated');
+                    // ensure viewers set contains this user (best-effort)
+                    try { await this.cacheService.sadd?.(viewersKey, userId); } catch (e) { /* non-fatal */ }
 
-            if (existingForUser) {
-                console.log('DB entry already exists for this user and video, ensuring viewers set is updated');
-                // ensure viewers set contains this user (best-effort)
-                try { await this.cacheService.sadd?.(viewersKey, userId); } catch (e) { /* non-fatal */ }
+                    return { cached: true, data: { ...formatted, videoUrl: normalizedUrl } };
+                }
 
-                return { cached: true, data: { ...formatted, videoUrl: normalizedUrl } };
-            }
+                const added = await this.cacheService.sadd?.(viewersKey, userId);
 
-            const added = await this.cacheService.sadd?.(viewersKey, userId);
-
-            if (added === 1) {
-                console.log('added to viewers set, creating DB entry');
-                const created = await this.transcriptionRepository.create({
-                    transcript: formatted.transcript,
-                    utterances: formatted.utterances,
-                    metadata: formatted.metadata,
-                    ip,
-                    videoUrl: normalizedUrl,
-                    userId,
-                });
-                this.eventEmitter.emit(TRANSCRIPTION_EVENTS.CREATED, {
-                    videoUrl: normalizedUrl,
-                    cacheKey,
-                    formatted,
-                    platform,
-                    ip,
-                    userId,
-                    jobId: created._id,
-                    fromCache: true,
-                });
-            } else {
-                // someone else likely created the DB row — re-check and emit to sync frontend
-                const maybe = await this.transcriptionRepository.findByUserAndVideo(userId, normalizedUrl);
-                this.eventEmitter.emit(TRANSCRIPTION_EVENTS.CREATED, {
-                    videoUrl: normalizedUrl,
-                    cacheKey,
-                    formatted,
-                    platform,
-                    ip,
-                    userId,
-                    jobId: maybe?._id,
-                    fromCache: true,
-                });
-            }
+                if (added === 1) {
+                    console.log('added to viewers set, creating DB entry');
+                    const created = await this.transcriptionRepository.create({
+                        transcript: formatted.transcript,
+                        utterances: formatted.utterances,
+                        metadata: formatted.metadata,
+                        ip,
+                        videoUrl: normalizedUrl,
+                        userId,
+                    });
+                    this.eventEmitter.emit(TRANSCRIPTION_EVENTS.CREATED, {
+                        videoUrl: normalizedUrl,
+                        cacheKey,
+                        formatted,
+                        platform,
+                        ip,
+                        userId,
+                        jobId: created._id,
+                        fromCache: true,
+                    });
+                } else {
+                    // someone else likely created the DB row — re-check and emit to sync frontend
+                    const maybe = await this.transcriptionRepository.findByUserAndVideo(userId, normalizedUrl);
+                    this.eventEmitter.emit(TRANSCRIPTION_EVENTS.CREATED, {
+                        videoUrl: normalizedUrl,
+                        cacheKey,
+                        formatted,
+                        platform,
+                        ip,
+                        userId,
+                        jobId: maybe?._id,
+                        fromCache: true,
+                    });
+                }
+            
 
 
             return { cached: true, data: { ...formatted, videoUrl: normalizedUrl } };

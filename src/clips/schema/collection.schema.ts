@@ -7,7 +7,7 @@ export type ICollection = CollectionDocument;
 
 @Schema({ timestamps: true })
 export class Collection {
-    @Prop({ type: String, ref: 'User', required: true, index: true })
+    @Prop({ type: Types.ObjectId, ref: 'User', required: true, index: true })
     userId: string;
 
     @Prop({ required: true, trim: true, maxlength: 20, lowercase: true })

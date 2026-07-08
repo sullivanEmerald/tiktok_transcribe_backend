@@ -1,11 +1,13 @@
-import { Controller, Post, Body, UsePipes, ValidationPipe, Req, HttpCode, HttpStatus, BadRequestException, Get, Query, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Post, Body, UsePipes, ValidationPipe, UseGuards, Req, HttpCode, HttpStatus, BadRequestException, Get, Query, Patch, Param, Delete } from '@nestjs/common';
 import { CreateClipDto } from './dto/create-clip.dto';
 import { ClipsService } from './clips.service';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import { QueryClipsDto } from './dto/query-clips.dto';
 import { Types } from 'mongoose';
 import { MoveClipDto } from './dto/move-clip.dto';
+import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 
+@UseGuards(JwtAuthGuard)
 @Controller('clips')
 export class ClipsController {
     constructor(private readonly clipsService: ClipsService) { }
@@ -13,23 +15,23 @@ export class ClipsController {
     @Post('create')
     // @UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
     @HttpCode(HttpStatus.CREATED)
-    async create(@Body() dto: CreateClipDto, @Req() req: any, @CurrentUser() user: any) {
+    async create(@Body() dto: CreateClipDto, @Req() req: any, @CurrentUser() userId: any) {
         console.log(dto)
-        if (!user.guestId) {
+        if (!userId) {
             throw new BadRequestException('Something went wrong. contact support');
         }
-        return this.clipsService.create({ ...dto }, user.guestId);
+        return this.clipsService.create({ ...dto }, userId);
     }
 
     @Get()
-    async GetClipsData(@Query() query: QueryClipsDto, @CurrentUser() user: any) {
-        if (!user?.guestId) {
+    async GetClipsData(@Query() query: QueryClipsDto, @CurrentUser() userId: any) {
+        if (!userId) {
             throw new BadRequestException('Something went wrong. contact support');
         }
 
 
         // Build filter object only including defined values
-        const filter: any = { userId: user.guestId };
+        const filter: any = { userId: userId };
         if (query.platform) filter.platform = query.platform;
         if (query.collectionId && query.collectionId !== null && query.collectionId !== '') {
             filter.collectionId = new Types.ObjectId(query.collectionId);
@@ -49,26 +51,26 @@ export class ClipsController {
     }
 
     @Patch(':id/move')
-    async moveClipToCollection(@Param('id') id: string, @CurrentUser() user: any, @Body() dto: MoveClipDto) {
-        console.log(`Moving clip ${id} for user ${user.guestId} to collection ${dto.collectionId}`);
-        return this.clipsService.moveClipToCollection(id, user.guestId, dto);
+    async moveClipToCollection(@Param('id') id: string, @CurrentUser() userId: any, @Body() dto: MoveClipDto) {
+        console.log(`Moving clip ${id} for user ${userId} to collection ${dto.collectionId}`);
+        return this.clipsService.moveClipToCollection(id, userId, dto);
     }
 
     @Patch(':id')
-    async updateClipText(@Body() dto: { text: string }, @CurrentUser() user: any, @Param('id') id: string) {
-        console.log(`Updating clip ${id} for user ${user.guestId} with text: ${dto.text}`);
-        return this.clipsService.updateClipText(id, user.guestId, dto);
+    async updateClipText(@Body() dto: { text: string }, @CurrentUser() userId: any, @Param('id') id: string) {
+        console.log(`Updating clip ${id} for user ${userId} with text: ${dto.text}`);
+        return this.clipsService.updateClipText(id, userId, dto);
     }
 
     @Delete(':id')
-    async deleteClip(@Param('id') id: string, @CurrentUser() user: any) {
-        console.log(`Deleting clip ${id} for user ${user.guestId}`);
-        return this.clipsService.deleteClip(id, user.guestId);
+    async deleteClip(@Param('id') id: string, @CurrentUser() userId: any) {
+        console.log(`Deleting clip ${id} for user ${userId}`);
+        return this.clipsService.deleteClip(id, userId);
     }
 
     @Patch(':id/title')
-    async updateClipTitle(@Body() dto: { title: string }, @CurrentUser() user: any, @Param('id') id: string) {
-        console.log(`Updating clip ${id} for user ${user.guestId} with title: ${dto.title}`);
-        return this.clipsService.updateClipTitle(id, user.guestId, dto);
+    async updateClipTitle(@Body() dto: { title: string }, @CurrentUser() userId: any, @Param('id') id: string) {
+        console.log(`Updating clip ${id} for user ${userId} with title: ${dto.title}`);
+        return this.clipsService.updateClipTitle(id, userId, dto);
     }
 }

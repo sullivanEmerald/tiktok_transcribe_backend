@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { Transcription } from './schema/transcription.schema';
 
 @Injectable()
@@ -24,6 +24,7 @@ export class TranscriptionRepository {
     }
 
     async findByUserId(userId: string) {
+        const objectId = new Types.ObjectId(userId);
         return this.transcriptionModel.find({ userId }).sort({ createdAt: -1 }).limit(10);
     }
 

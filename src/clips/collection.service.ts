@@ -58,7 +58,7 @@ export class CollectionService {
     }
 
     async remove(userId: string, collectionId: string) {
-        await this.findOne(userId, collectionId); // ownership check
+        await this.findOne(userId, collectionId);
 
         // Unassign clips rather than deleting them
         await this.clipModel.updateMany(

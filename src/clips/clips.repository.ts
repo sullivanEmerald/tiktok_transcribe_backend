@@ -11,7 +11,8 @@ export class ClipsRepository {
     ) { }
 
     async create(data: CreateClipDto, userId: string) {
-        const clip = new this.clipModel({ ...data, userId });
+        const objectId = new Types.ObjectId(userId)
+        const clip = new this.clipModel({ ...data, userId: objectId });
         return clip.save();
     }
 

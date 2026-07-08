@@ -1,12 +1,12 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document } from 'mongoose';
+import { Document, Types } from 'mongoose';
 
 export type DownloadDocument = Download & Document;
 
 @Schema({ timestamps: true })
 export class Download extends Document {
-    @Prop({ required: true, index: true })
-    guestId: string;
+    @Prop({ required: true, type: Types.ObjectId, index: true })
+    userId: string;
 
     @Prop({ required: true })
     videoUrl: string;

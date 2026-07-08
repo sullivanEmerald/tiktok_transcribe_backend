@@ -38,6 +38,7 @@ export class AuthController {
 
     @Post('refresh')
     async refresh(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
+        console.log('refreshing')
         const oldToken = req.cookies['refreshToken'];
         if (!oldToken) throw new UnauthorizedException();
         const { accessToken, refreshToken } = await this.authService.rotateRefreshToken(oldToken);
@@ -47,7 +48,7 @@ export class AuthController {
 
     @UseGuards(JwtAuthGuard)
     @Get('me')
-    async getProfile(@CurrentUser() user: any) {
-        return this.authService.getProfile(user.userId)
+    async getProfile(@CurrentUser() userId: string) {
+        return this.authService.getProfile(userId)
     }
 }

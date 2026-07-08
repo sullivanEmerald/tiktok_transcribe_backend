@@ -14,7 +14,8 @@ import { TranscriptionEventsHandler } from './events/transcription-events.handle
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { AbuseProtectionEventsHandler } from './events/abuseProtection.handler';
 import { ClaudeService } from 'src/common/claudeService';
-// import { TranscriptionWorker } from './transcription.worker';
+import { GuestService } from './guest/guest.service';
+import { GuestController } from './guest/guest.controller';
 
 @Module({
     imports: [
@@ -23,7 +24,7 @@ import { ClaudeService } from 'src/common/claudeService';
         ]),
         EventEmitterModule.forRoot(),
     ],
-    controllers: [TranscriptionController],
+    controllers: [TranscriptionController, GuestController],
     providers: [
         TranscriptionService,
         RecaptchaService,
@@ -35,6 +36,7 @@ import { ClaudeService } from 'src/common/claudeService';
         TranscriptionEventsHandler,
         AbuseProtectionEventsHandler,
         ClaudeService,
+        GuestService
         // TranscriptionWorker,
     ],
     exports: [TranscriptionService],

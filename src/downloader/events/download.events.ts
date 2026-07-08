@@ -16,9 +16,9 @@ export class DownloaderEventsHandler {
 
     @OnEvent(DOWNLOADER_EVENTS.DOWNLOAD_CREATED)
     async handleDownloadCreated(event: any) {
-        const { guestId, videoUrl, title, downloadUrl, ip, source, duration, caption, thumbnail } = event;
+        const { userId, videoUrl, title, downloadUrl, ip, source, duration, caption, thumbnail } = event;
         try {
-            const download = new this.downloadModel({ guestId, videoUrl, title, downloadUrl, ip, caption, thumbnail, source, duration });
+            const download = new this.downloadModel({ userId, videoUrl, title, downloadUrl, ip, caption, thumbnail, source, duration });
             await download.save();
         } catch (err) {
             this.logger.error(err);

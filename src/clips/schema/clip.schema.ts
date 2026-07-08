@@ -30,7 +30,7 @@ export class Clip {
     @Prop({ type: String })
     videoTitle?: string;
 
-    @Prop({ ref: 'User', index: true })
+    @Prop({ type: Types.ObjectId, ref: 'User', index: true })
     userId: string;
 }
 export const ClipSchema = SchemaFactory.createForClass(Clip);

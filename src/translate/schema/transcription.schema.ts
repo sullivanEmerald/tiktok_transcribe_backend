@@ -1,6 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
 import { Utterance } from 'src/common/interfaces/utterance.interface';
+import { Types } from 'mongoose';
 
 export type Author = {
     username: string;
@@ -39,7 +40,7 @@ export class Transcription extends Document {
     @Prop({ required: true, index: true })
     ip: string;
 
-    @Prop({ required: true, index: true })
+    @Prop({ type: Types.ObjectId, ref: 'User', index: true, default: null })
     userId: string;
 
     @Prop({ required: true })
