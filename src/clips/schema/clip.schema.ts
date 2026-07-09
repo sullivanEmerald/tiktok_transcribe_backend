@@ -31,7 +31,7 @@ export class Clip {
     videoTitle?: string;
 
     @Prop({ type: Types.ObjectId, ref: 'User', index: true })
-    userId: string;
+    userId: Types.ObjectId;
 }
 export const ClipSchema = SchemaFactory.createForClass(Clip);
 ClipSchema.index({ text: 'text', videoUrl: 'text' });

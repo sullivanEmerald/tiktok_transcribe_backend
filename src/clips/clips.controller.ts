@@ -25,11 +25,10 @@ export class ClipsController {
 
     @Get()
     async GetClipsData(@Query() query: QueryClipsDto, @CurrentUser() userId: any) {
+        console.log("userID", userId)
         if (!userId) {
             throw new BadRequestException('Something went wrong. contact support');
         }
-
-
         // Build filter object only including defined values
         const filter: any = { userId: userId };
         if (query.platform) filter.platform = query.platform;
@@ -47,18 +46,18 @@ export class ClipsController {
         const offset = (page - 1) * limit;
 
         const clips = await this.clipsService.getClips(filter, { offset, limit });
+        console.log('user clips', clips)
         return clips;
     }
 
+
     @Patch(':id/move')
     async moveClipToCollection(@Param('id') id: string, @CurrentUser() userId: any, @Body() dto: MoveClipDto) {
-        console.log(`Moving clip ${id} for user ${userId} to collection ${dto.collectionId}`);
         return this.clipsService.moveClipToCollection(id, userId, dto);
     }
 
     @Patch(':id')
     async updateClipText(@Body() dto: { text: string }, @CurrentUser() userId: any, @Param('id') id: string) {
-        console.log(`Updating clip ${id} for user ${userId} with text: ${dto.text}`);
         return this.clipsService.updateClipText(id, userId, dto);
     }
 
@@ -73,4 +72,5 @@ export class ClipsController {
         console.log(`Updating clip ${id} for user ${userId} with title: ${dto.title}`);
         return this.clipsService.updateClipTitle(id, userId, dto);
     }
+
 }

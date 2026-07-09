@@ -23,7 +23,6 @@ export class ClipsService {
     async create(data: CreateClipDto, userId: string) {
         const clip = await this.clipRepository.create(data, userId);
         this.eventEmitter.emit(ClIPS_EVENTS.CLIP_CREATED, userId);
-        // Invalidate user's clips cache
         try {
             await this.cacheService.del(CLIPS_CACHE_KEYS.USER_CLIPS(userId));
         } catch (e) {
@@ -33,8 +32,8 @@ export class ClipsService {
     }
 
     async getClips(filter: any, pagination?: { offset?: number; limit?: number }) {
-        const userId = filter.userId;
-        const clips = await this.clipRepository.find(filter, pagination);
+        const userId = new Types.ObjectId(filter.userId);
+        const clips = await this.clipRepository.find({ ...filter, userId: userId }, pagination);
         // this.eventEmitter.emit(ClIPS_EVENTS.CLIP_FETCHED, { userId, clips });
 
         return clips;

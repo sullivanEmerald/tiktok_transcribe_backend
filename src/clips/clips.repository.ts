@@ -42,11 +42,14 @@ export class ClipsRepository {
     }
 
     async findOne(clipId: string | undefined, userId: string) {
+
         if (!clipId) return null;
+
+        const objectId = new Types.ObjectId(userId)
 
         return await this.clipModel.findOne({
             _id: clipId,
-            userId: userId,
+            userId: objectId,
         });
     }
 

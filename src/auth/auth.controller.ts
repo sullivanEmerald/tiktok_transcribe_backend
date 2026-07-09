@@ -31,8 +31,10 @@ export class AuthController {
         @Body() dto: LoginDto,
         @Res({ passthrough: true }) res: Response,
     ) {
+        console.log("login details", dto)
         const { accessToken, refreshToken, user } = await this.authService.login(dto);
         this.authService.setAuthCookies(res, accessToken, refreshToken);
+        console.log("returning user", user)
         return { user };
     }
 
@@ -43,7 +45,7 @@ export class AuthController {
         if (!oldToken) throw new UnauthorizedException();
         const { accessToken, refreshToken } = await this.authService.rotateRefreshToken(oldToken);
         this.authService.setAuthCookies(res, accessToken, refreshToken);
-        return { ok: true };
+        return { ok: true }
     }
 
     @UseGuards(JwtAuthGuard)
