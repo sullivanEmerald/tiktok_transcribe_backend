@@ -69,7 +69,7 @@ export class AuthService {
 
         const { userData } = cached;
 
-        const user = await this.usersService.create(userData);
+        await this.usersService.create(userData);
         await this.cacheService.del(cacheKey);
 
         return HttpStatus.OK;
