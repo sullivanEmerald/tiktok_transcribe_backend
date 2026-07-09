@@ -230,6 +230,25 @@ export class AuthService {
         });
     }
 
+
+
+    clearAuthCookies(res: Response) {
+        const isProd = process.env.NODE_ENV === "production";
+
+        res.clearCookie("accessToken", {
+            httpOnly: true,
+            secure: isProd,
+            sameSite: isProd ? "none" : "lax",
+        });
+
+        res.clearCookie("refreshToken", {
+            httpOnly: true,
+            secure: isProd,
+            sameSite: isProd ? "none" : "lax",
+            path: "/api/auth/refresh",
+        });
+    }
+
     async rotateRefreshToken(oldToken: string) {
         const candidates = await this.refreshTokenModel.find({ revoked: false });
         const match = await this.findMatchingToken(candidates, oldToken);
