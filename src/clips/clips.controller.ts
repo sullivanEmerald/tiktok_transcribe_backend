@@ -18,7 +18,7 @@ export class ClipsController {
     async create(@Body() dto: CreateClipDto, @Req() req: any, @CurrentUser() userId: any) {
         console.log(dto)
         if (!userId) {
-            throw new BadRequestException('Something went wrong. contact support');
+            throw new BadRequestException('Users feature. Login or Register to use this feature');
         }
         return this.clipsService.create({ ...dto }, userId);
     }

@@ -213,7 +213,6 @@ export class AuthService {
 
 
     setAuthCookies(res: Response, accessToken: string, refreshToken: string) {
-        console.log("refreshToken", refreshToken)
         const isProd = process.env.NODE_ENV === 'production';
         res.cookie('accessToken', accessToken, {
             httpOnly: true,
@@ -225,7 +224,7 @@ export class AuthService {
             httpOnly: true,
             secure: isProd,
             sameSite: isProd ? 'none' : 'lax',
-            path: '/api/auth/refresh',
+            path: '/',
             maxAge: 7 * 24 * 60 * 60 * 1000,
         });
     }
@@ -245,7 +244,7 @@ export class AuthService {
             httpOnly: true,
             secure: isProd,
             sameSite: isProd ? "none" : "lax",
-            path: "/api/auth/refresh",
+            path: "/",
         });
     }
 
