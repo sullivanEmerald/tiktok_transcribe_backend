@@ -103,11 +103,14 @@ export class DownloaderService {
 
     const contentLength = videoStream.headers['content-length'];
 
+
     // Sanitize filename — remove characters that break Content-Disposition
+    const uniqueId = Math.floor(100000 + Math.random() * 900000);
+
     const safeTitle = 'ClipScript'.replace(/[^a-zA-Z0-9_\- ]/g, '_').trim();
 
     // These headers are what force "Save As" on the browser
-    res.setHeader('Content-Disposition', `attachment; filename="${safeTitle}.mp4"`);
+    res.setHeader('Content-Disposition', `attachment; filename="${safeTitle}_${uniqueId}.mp4"`);
     res.setHeader('Content-Type', contentType);
     res.setHeader('Cache-Control', 'no-store');
 
