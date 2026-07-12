@@ -17,6 +17,7 @@ async function bootstrap() {
   app.enableCors({
     origin: [frontendUrl, devUrl, subDomain],
     credentials: true,
+    exposedHeaders: ['Content-Disposition'],
   });
   // Set up the Socket.IO adapter
   app.useWebSocketAdapter(new IoAdapter(app));
