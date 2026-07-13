@@ -11,6 +11,7 @@ import { DownloadRepository } from './download.repository';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { DOWNLOADER_EVENTS } from './events/downloader-events.type';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
+import { Types } from 'mongoose';
 
 type VideoPlatform = 'tiktok' | 'instagram' | 'youtube' | 'unknown';
 
@@ -90,64 +91,70 @@ export class DownloaderService {
   }
 
   async streamVideoToClient(dto: CreateTranscriptionDto, res: Response, userId?: string, ip?: string) {
-    const meta = await this.getVideoMeta(dto);
+    try {
+      const meta = await this.getVideoMeta(dto);
 
-    // Fetch the actual video as a stream — do NOT buffer it all in memory
-    const videoStream = await axios.get<NodeJS.ReadableStream>(meta.download_url, {
-      responseType: 'stream',
-      timeout: 30_000,
-    });
+      // Fetch the actual video as a stream — do NOT buffer it all in memory
+      const videoStream = await axios.get<NodeJS.ReadableStream>(meta.download_url, {
+        responseType: 'stream',
+        timeout: 30_000,
+      });
 
-    const contentType =
-      videoStream.headers['content-type'] || 'clipScript_video/mp4';
+      const contentType =
+        videoStream.headers['content-type'] || 'clipScript_video/mp4';
 
-    const contentLength = videoStream.headers['content-length'];
+      const contentLength = videoStream.headers['content-length'];
 
 
-    // Sanitize filename — remove characters that break Content-Disposition
-    const uniqueId = Math.floor(100000 + Math.random() * 900000);
+      // Sanitize filename — remove characters that break Content-Disposition
+      const uniqueId = Math.floor(100000 + Math.random() * 900000);
 
-    const safeTitle = 'ClipScript'.replace(/[^a-zA-Z0-9_\- ]/g, '_').trim();
+      const safeTitle = 'ClipScript'.replace(/[^a-zA-Z0-9_\- ]/g, '_').trim();
 
-    // These headers are what force "Save As" on the browser
-    res.setHeader('Content-Disposition', `attachment; filename="${safeTitle}_${uniqueId}.mp4"`);
-    res.setHeader('Content-Type', contentType);
-    res.setHeader('Cache-Control', 'no-store');
+      // These headers are what force "Save As" on the browser
+      res.setHeader('Content-Disposition', `attachment; filename="${safeTitle}_${uniqueId}.mp4"`);
+      res.setHeader('Content-Type', contentType);
+      res.setHeader('Cache-Control', 'no-store');
 
-    if (contentLength) {
-      res.setHeader('Content-Length', contentLength);
-    }
-
-    // Persist download record (best-effort) before piping
-    this.eventEmitter.emit(DOWNLOADER_EVENTS.DOWNLOAD_CREATED, {
-      userId: userId,
-      videoUrl: dto.videoUrl,
-      title: meta.title,
-      downloadUrl: meta.download_url,
-      thumbnail: meta.thumbnail_url,
-      caption: meta.caption,
-      source: meta.source,
-      duration: meta.duration,
-      ip
-    });
-
-    // Pipe the upstream response directly to the client response
-    // This never loads the full video into memory
-    videoStream.data.pipe(res);
-
-    // Handle upstream errors mid-stream
-    videoStream.data.on('error', (err) => {
-      console.error('Stream error from CDN:', err);
-      if (!res.headersSent) {
-        res.status(502).json({ message: 'Upstream stream failed' });
-      } else {
-        res.destroy(); // headers already sent, just kill the connection
+      if (contentLength) {
+        res.setHeader('Content-Length', contentLength);
       }
-    });
+
+
+      this.eventEmitter.emit(DOWNLOADER_EVENTS.DOWNLOAD_CREATED, {
+        userId,
+        videoUrl: dto.videoUrl,
+        title: meta.title,
+        downloadUrl: meta.download_url,
+        thumbnail: meta.thumbnail_url,
+        caption: meta.caption,
+        source: meta.source,
+        duration: meta.duration,
+        ip
+      });
+
+      // Pipe the upstream response directly to the client response
+      // This never loads the full video into memory
+      videoStream.data.pipe(res);
+
+      // Handle upstream errors mid-stream
+      videoStream.data.on('error', (err) => {
+        console.error('Stream error from CDN:', err);
+        if (!res.headersSent) {
+          res.status(502).json({ message: 'Upstream stream failed' });
+        } else {
+          res.destroy(); // headers already sent, just kill the connection
+        }
+      });
+    } catch (error) {
+      console.log(error)
+      throw new BadRequestException("Your request is failing. Try again later")
+    }
   }
 
 
   async getDownloadsByGuestId(userId: string) {
-    return this.downloadRepository.findByGuestId(userId);
+    const userDownloads = await this.downloadRepository.findByGuestId(userId);
+    return userDownloads;
   }
 }

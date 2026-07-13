@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { Download } from './schema/download.schema';
 
 @Injectable()
@@ -11,7 +11,7 @@ export class DownloadRepository {
         return this.downloadModel.create(data);
     }
 
-    async findByGuestId(guestId: string) {
-        return this.downloadModel.find({ guestId }).sort({ createdAt: -1 });
+    async findByGuestId(userId: string) {
+        return this.downloadModel.find({ userId: userId }).sort({ createdAt: -1 });
     }
 }

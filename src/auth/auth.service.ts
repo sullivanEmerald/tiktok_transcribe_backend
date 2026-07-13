@@ -218,7 +218,7 @@ export class AuthService {
             httpOnly: true,
             secure: isProd,
             sameSite: isProd ? 'none' : 'lax',
-            maxAge: 15 * 60 * 1000,
+            maxAge: 7 * 24 * 60 * 60 * 1000,
         });
         res.cookie('refreshToken', refreshToken, {
             httpOnly: true,

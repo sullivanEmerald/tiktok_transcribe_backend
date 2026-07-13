@@ -4,7 +4,7 @@ import { DownloaderService } from './downloader.service';
 import { RecaptchaService } from 'src/common/recaptcha.service';
 import { BullModule } from '@nestjs/bullmq';
 // import { VideoProcessor } from 'src/queue/video.processor';
-import { ProgressGateway } from 'src/gateways/progress.gateway';
+// import { ProgressGateway } from 'src/gateways/progress.gateway';
 import { RedisService } from 'src/common/redis.service';
 import { AbuseProtectionService } from 'src/common/abuse-protection.service';
 import { MongooseModule } from '@nestjs/mongoose';
@@ -17,7 +17,7 @@ import { DownloaderEventsHandler } from './events/download.events';
     MongooseModule.forFeature([{ name: Download.name, schema: DownloadSchema }]),
   ],
   controllers: [DownloaderController],
-  providers: [DownloaderService, RecaptchaService, ProgressGateway, RedisService, AbuseProtectionService, DownloadRepository, DownloaderEventsHandler],
+  providers: [DownloaderService, RecaptchaService, RedisService, AbuseProtectionService, DownloadRepository, DownloaderEventsHandler],
   exports: [DownloaderService],
 })
 export class DownloaderModule { }

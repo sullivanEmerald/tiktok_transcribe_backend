@@ -6,7 +6,7 @@ import { CacheService } from 'src/common/cache.service';
 import { SupadataService } from 'src/common/supadata.service';
 import { formatSupadataTranscript } from 'src/common/utils/vtt-parser';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { ProgressGateway } from 'src/gateways/progress.gateway';
+// import { ProgressGateway } from 'src/gateways/progress.gateway';
 import { TRANSCRIPTION_EVENTS } from '../events/transscibe.types';
 import { from } from 'rxjs';
 import { Utterance } from 'src/common/interfaces/utterance.interface';

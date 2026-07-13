@@ -3,7 +3,7 @@ import { OnEvent } from '@nestjs/event-emitter';
 import { CacheService } from 'src/common/cache.service';
 import { Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { Download, DownloadDocument } from '../schema/download.schema';
 import { DOWNLOADER_EVENTS } from './downloader-events.type';
 

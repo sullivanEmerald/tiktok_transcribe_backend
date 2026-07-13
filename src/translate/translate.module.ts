@@ -6,7 +6,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { Transcription, TranscriptionSchema } from './schema/transcription.schema';
 import { TranscriptionRepository } from './transcription.repository';
 import { RecaptchaService } from '../common/recaptcha.service';
-import { ProgressGateway } from 'src/gateways/progress.gateway';
+// import { ProgressGateway } from 'src/gateways/progress.gateway';
 import { CacheService } from 'src/common/cache.service';
 import { AbuseProtectionService } from '../common/abuse-protection.service';
 import { SupadataService } from 'src/common/supadata.service';
@@ -30,7 +30,7 @@ import { GuestController } from './guest/guest.controller';
         RecaptchaService,
         AbuseProtectionService,
         TranscriptionRepository,
-        ProgressGateway,
+        // ProgressGateway,
         CacheService,
         SupadataService,
         TranscriptionEventsHandler,
