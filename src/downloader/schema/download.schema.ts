@@ -5,7 +5,7 @@ export type DownloadDocument = Download & Document;
 
 @Schema({ timestamps: true })
 export class Download extends Document {
-    @Prop({ required: true, type: Types.ObjectId, ref: 'User', index: true })
+    @Prop({ required: true, type: Types.ObjectId, ref: 'User', index: true, default: null })
     userId: Types.ObjectId | string | null;
 
     @Prop({ required: true })

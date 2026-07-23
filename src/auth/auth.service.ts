@@ -14,6 +14,7 @@ import { randomBytes } from 'crypto';
 import { RefreshToken, RefreshTokenDocument } from './schema/refreshToken.schema';
 import { addDays } from 'date-fns';
 import type { Response } from 'express';
+import { GoogleProfile } from './dto/google.dto';
 
 
 @Injectable()
@@ -57,6 +58,17 @@ export class AuthService {
 
         return HttpStatus.CREATED;
     }
+
+    async validateOAuthLogin(googleProfile: GoogleProfile) {
+        const { email, firstName, lastName, picture } = googleProfile;
+        const fullName = `${firstName} ${lastName}`;
+        let user = await this.usersService.findByEmail({ email: googleProfile.email });
+        if (!user) {
+            user = await this.usersService.create({ email, fullName, picture });
+        }
+        return user;
+    }
+
 
     async verifyEmail(token: string) {
         const cacheKey = `user_verification:${token}`;
@@ -277,8 +289,9 @@ export class AuthService {
         }
         return {
             id: user._id,
-            firstName: user.firstName,
-            email: user.email
+            firstName: user.fullName || user.firstName,
+            email: user.email,
+            avartar: user.picture || null
         }
     }
 

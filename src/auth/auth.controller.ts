@@ -5,11 +5,14 @@ import { LoginDto } from './dto/login.dto';
 import type { Response, Request } from 'express';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { GoogleAuthGuard } from './guards/google-auth.guard';
+import { ConfigService } from '@nestjs/config';
 
 @Controller('auth')
 export class AuthController {
     constructor(
-        private readonly authService: AuthService
+        private readonly authService: AuthService,
+        private readonly configService: ConfigService
     ) { }
     @Post('register')
     async register(@Body() registerDto: RegisterDto) {
@@ -86,5 +89,25 @@ export class AuthController {
     @Post('reset-password')
     async ResetPassword(@Body() dto: { resetTicket: string, newPassword: string }) {
         return this.authService.resetPassword(dto.resetTicket, dto.newPassword);
+    }
+
+    @Get('google')
+    @UseGuards(GoogleAuthGuard)
+    async googleAuth() {
+        // Intentionally empty — Passport's GoogleStrategy handles the redirect.
+    }
+
+    @Get('google/callback')
+    @UseGuards(GoogleAuthGuard)
+    async googleAuthCallback(@Req() req: Request, @Res() res: Response) {
+        const googleProfile = req.user as any;
+        const user = await this.authService.validateOAuthLogin(googleProfile);
+
+        const { accessToken, refreshToken } = await this.authService.issueTokens(user);
+
+        this.authService.setAuthCookies(res, accessToken, refreshToken);
+
+        const frontendUrl = this.configService.get<string>('FRONTEND_URL');
+        res.redirect(`${frontendUrl}/dashboard`);
     }
 }

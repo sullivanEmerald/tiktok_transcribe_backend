@@ -13,11 +13,12 @@ import { JwtStrategy } from './strategies/jwt.strategy';
 import { Mongoose } from 'mongoose';
 import { MongooseModule } from '@nestjs/mongoose';
 import { RefreshToken, RefreshTokenSchema } from './schema/refreshToken.schema';
+import { GoogleStrategy } from './strategies/google.strategy';
 
 
 @Module({
 
-  providers: [AuthService, CacheService, AuthEventsHandler, JwtStrategy],
+  providers: [AuthService, CacheService, AuthEventsHandler, JwtStrategy, GoogleStrategy],
   controllers: [AuthController],
   imports: [
     UsersModule,

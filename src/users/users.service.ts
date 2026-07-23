@@ -32,14 +32,13 @@ export class UsersService {
         return user;
     }
 
-
     async findById(userId: string) {
         const objectId = new Types.ObjectId(userId);
         const user = await this.userModel.findById(objectId)
         return user;
     }
 
-    async create(userData: RegisterDto) {
+    async create(userData: any) {
         const newUser = await this.userModel.create({ ...userData });
         return newUser;
     }

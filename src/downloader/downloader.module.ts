@@ -11,13 +11,15 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { Download, DownloadSchema } from './schema/download.schema';
 import { DownloadRepository } from './download.repository';
 import { DownloaderEventsHandler } from './events/download.events';
+import { GuestDownloaderController } from './guest/guestDownloader.controller';
+import { GuestDownloaderService } from './guest/guestDownloader.service';
 
 @Module({
   imports: [
     MongooseModule.forFeature([{ name: Download.name, schema: DownloadSchema }]),
   ],
-  controllers: [DownloaderController],
-  providers: [DownloaderService, RecaptchaService, RedisService, AbuseProtectionService, DownloadRepository, DownloaderEventsHandler],
+  controllers: [DownloaderController, GuestDownloaderController],
+  providers: [DownloaderService, RecaptchaService, RedisService, AbuseProtectionService, DownloadRepository, DownloaderEventsHandler, GuestDownloaderService],
   exports: [DownloaderService],
 })
 export class DownloaderModule { }
