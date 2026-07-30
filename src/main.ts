@@ -11,7 +11,7 @@ async function bootstrap() {
   app.setGlobalPrefix('api');
   app.set('trust proxy', 1);
   app.use(cookieParser());
-  const frontendUrl = process.env.FRONTEND_URL
+  const frontendUrl = process.env.FRONTEND_URL || 'https://useclipscript.com';
   const devUrl = 'http://localhost:3000';
   const subDomain = "https://useclipscript.com"
   const backupDomain = "https://tiktok-transcribe-backend.onrender.com"
