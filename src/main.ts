@@ -13,10 +13,9 @@ async function bootstrap() {
   app.use(cookieParser());
   const frontendUrl = process.env.FRONTEND_URL || 'https://useclipscript.com';
   const devUrl = 'http://localhost:3000';
-  const subDomain = "https://useclipscript.com"
-  const backupDomain = "https://tiktok-transcribe-backend.onrender.com"
+  const subDomain = "https://www.useclipscript.com"
   app.enableCors({
-    origin: [frontendUrl, devUrl, subDomain, backupDomain],
+    origin: [frontendUrl, devUrl, subDomain],
     credentials: true,
     exposedHeaders: ['Content-Disposition'],
   });
