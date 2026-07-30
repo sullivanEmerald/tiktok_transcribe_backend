@@ -11,11 +11,12 @@ async function bootstrap() {
   app.setGlobalPrefix('api');
   app.set('trust proxy', 1);
   app.use(cookieParser());
-  const frontendUrl = process.env.FRONTEND_URL || 'https://tiktok-transcribe-frontend.vercel.app';
+  const frontendUrl = process.env.FRONTEND_URL
   const devUrl = 'http://localhost:3000';
   const subDomain = "https://useclipscript.com"
+  const backupDomain = "https://tiktok-transcribe-backend.onrender.com"
   app.enableCors({
-    origin: [frontendUrl, devUrl, subDomain],
+    origin: [frontendUrl, devUrl, subDomain, backupDomain],
     credentials: true,
     exposedHeaders: ['Content-Disposition'],
   });
