@@ -31,16 +31,14 @@ export class SupadataService {
     // Fetch transcript with polling and metadata
     async fetchTranscriptWithMetaData(videoUrl: string) {
         try {
-            const [transcriptResult, metadata] = await Promise.all([
-                this.supadata.transcript({
-                    url: videoUrl,
-                    text: false,
-                    mode: 'auto',
-                    lang: 'en',
-                }),
+            const transcriptResult = await this.supadata.transcript({
+                url: videoUrl,
+                text: false,
+                mode: 'auto',
+                lang: 'en',
+            });
 
-                this.fetchMetadata(videoUrl),
-            ]);
+            const metadata = await this.fetchMetadata(videoUrl);
 
             if ('jobId' in transcriptResult) {
                 const startTime = Date.now();
